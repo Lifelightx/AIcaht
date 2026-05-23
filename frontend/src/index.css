@@ -1,0 +1,61 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --color-gh-bg: #ffffff;
+  --color-gh-bg-subtle: #f6f8fa;
+  --color-gh-border: #d0d7de;
+  --color-gh-border-muted: hsla(210, 18%, 87%, 1);
+  --color-gh-text: #24292f;
+  --color-gh-text-muted: #57606a;
+  --color-gh-accent: #0969da;
+  --color-gh-success: #1a7f37;
+  --color-gh-btn-bg: #f6f8fa;
+  --color-gh-btn-border: rgba(27, 31, 36, 0.15);
+  --color-gh-btn-hover: #f3f4f6;
+  --color-gh-btn-primary: #2da44e;
+  --color-gh-btn-primary-hover: #2c974b;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme dark {
+  --color-gh-bg: #0d1117;
+  --color-gh-bg-subtle: #161b22;
+  --color-gh-border: #30363d;
+  --color-gh-border-muted: #21262d;
+  --color-gh-text: #c9d1d9;
+  --color-gh-text-muted: #8b949e;
+  --color-gh-accent: #58a6ff;
+  --color-gh-success: #3fb950;
+  --color-gh-btn-bg: #21262d;
+  --color-gh-btn-border: rgba(240, 246, 252, 0.1);
+  --color-gh-btn-hover: #30363d;
+  --color-gh-btn-primary: #238636;
+  --color-gh-btn-primary-hover: #2ea043;
+}
+
+body {
+  @apply bg-gh-bg text-gh-text font-sans antialiased;
+}
+
+/* Custom Scrollbar for Webkit */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-gh-border);
+  border: 4px solid transparent;
+  background-clip: padding-box;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-gh-text-muted);
+}
