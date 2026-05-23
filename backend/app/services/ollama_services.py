@@ -1,7 +1,10 @@
+
 import httpx
 import json
-
-OLLAMA_URL = "http://localhost:11434/api/generate"
+from dotenv import load_dotenv
+import os
+load_dotenv()
+OLLAMA_URL = os.getenv("OLLAMA_HOST")+"/api/generate"
 
 async def stream_response(message:str, model:str):
     payload = {
@@ -28,4 +31,5 @@ async def stream_response(message:str, model:str):
 
                 except Exception as e:
                     print(e)
+                    print(f"raw line: {line}")
                     continue
