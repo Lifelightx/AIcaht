@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { loginApi, signupApi } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -15,36 +16,31 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  const login = (email, password) => {
-    // Mock login logic
-    const users = JSON.parse(localStorage.getItem('chatAppUsers') || '[]');
-    const foundUser = users.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const userData = { email: foundUser.email, name: foundUser.name };
+  const login = async (email, password) => {
+    try {
+      const response = await loginApi(email, password);
+      // Assuming response contains user details. Adjust based on your actual backend response schema.
+      // If your backend returns a token, you should store it here too (e.g., localStorage.setItem('token', response.access_token))
+      const userData = response.user || { email }; // Fallback if backend just returns success
       setUser(userData);
       localStorage.setItem('chatAppUser', JSON.stringify(userData));
       return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-    return { success: false, error: 'Invalid email or password' };
   };
 
-  const signup = (name, email, password) => {
-    // Mock signup logic
-    const users = JSON.parse(localStorage.getItem('chatAppUsers') || '[]');
-    if (users.find(u => u.email === email)) {
-      return { success: false, error: 'Email already exists' };
+  const signup = async (name, email, password) => {
+    try {
+      const response = await signupApi(name, email, password);
+      // Automatically log in after signup (adjust based on what the API returns)
+      const userData = response.user || { name, email }; 
+      setUser(userData);
+      localStorage.setItem('chatAppUser', JSON.stringify(userData));
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error.message };
     }
-    
-    const newUser = { name, email, password };
-    users.push(newUser);
-    localStorage.setItem('chatAppUsers', JSON.stringify(users));
-    
-    // Automatically log in after signup
-    const userData = { name, email };
-    setUser(userData);
-    localStorage.setItem('chatAppUser', JSON.stringify(userData));
-    return { success: true };
   };
 
   const logout = () => {
@@ -62,3 +58,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

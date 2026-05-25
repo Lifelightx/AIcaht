@@ -28,3 +28,38 @@ export const fetchChatResponse = async (message, model, onChunk) => {
     onChunk(chunk);
   }
 };
+
+export const loginApi = async (email, password) => {
+  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Login failed with status ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const signupApi = async (name, email, password) => {
+  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    // Assuming backend takes name along with email and password
+    body: JSON.stringify({ name, email, password }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Signup failed with status ${response.status}`);
+  }
+
+  return response.json();
+};

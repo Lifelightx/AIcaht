@@ -11,7 +11,7 @@ export default function Signup() {
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
@@ -20,7 +20,7 @@ export default function Signup() {
       return;
     }
 
-    const result = signup(name, email, password);
+    const result = await signup(name, email, password);
     if (result.success) {
       navigate('/');
     } else {
