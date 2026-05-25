@@ -1,7 +1,10 @@
 import React from 'react';
-import { MessageSquare, Settings, Moon, Sun, Plus, Terminal, HardDrive } from 'lucide-react';
+import { MessageSquare, Settings, Moon, Sun, Plus, Terminal, HardDrive, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, isOpen, toggleSidebar }) => {
+  const { logout, user } = useAuth();
+  
   return (
     <div className={`border-r border-gh-border bg-gh-bg-subtle flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${isOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 overflow-hidden border-none'}`}>
       {/* Header */}
@@ -67,6 +70,11 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
 
       {/* Footer Settings */}
       <div className="p-4 border-t border-gh-border space-y-2">
+        {user && (
+          <div className="px-2 py-2 mb-2 text-xs text-gh-text-muted truncate">
+            Logged in as <span className="font-semibold text-gh-text">{user.name || user.email}</span>
+          </div>
+        )}
         <button 
           onClick={toggleDarkMode}
           className="w-full flex items-center gap-2 px-2 py-2 text-sm text-gh-text-muted hover:text-gh-text hover:bg-gh-btn-hover rounded-md transition-colors"
@@ -77,6 +85,13 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
         <button className="w-full flex items-center gap-2 px-2 py-2 text-sm text-gh-text-muted hover:text-gh-text hover:bg-gh-btn-hover rounded-md transition-colors">
           <Settings className="w-4 h-4" />
           <span>Settings</span>
+        </button>
+        <button 
+          onClick={logout}
+          className="w-full flex items-center gap-2 px-2 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-gh-btn-hover rounded-md transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Log Out</span>
         </button>
       </div>
     </div>

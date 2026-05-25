@@ -1,9 +1,14 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from sqlalchemy.ext.asyncio import(
     create_async_engine,
     async_sessionmaker
 )
 
-DATABASE_URL = (
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", 
     "postgresql+asyncpg://admin:admin123@localhost/chatapp"
 )
 
