@@ -2,7 +2,7 @@ import React from 'react';
 import { MessageSquare, Settings, Moon, Sun, Plus, Terminal, HardDrive, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, isOpen, toggleSidebar }) => {
+const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, availableModels = {}, isOpen, toggleSidebar }) => {
   const { logout, user } = useAuth();
   
   return (
@@ -37,9 +37,15 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
             onChange={(e) => setSelectedModel(e.target.value)}
             className="w-full bg-gh-bg border border-gh-border text-gh-text text-sm rounded-md focus:ring-2 focus:ring-gh-accent focus:border-transparent block p-2.5 appearance-none shadow-sm cursor-pointer"
           >
-            <option value="qwen2.5">Qwen 2.5</option>
-            <option value="llama3">Llama 3</option>
-            <option value="mistral">Mistral</option>
+            {Object.keys(availableModels).length > 0 ? (
+              Object.entries(availableModels).map(([key, config]) => (
+                <option key={key} value={key}>
+                  {config.model_name || key} 
+                </option>
+              ))
+            ) : (
+              <option value="">Loading models...</option>
+            )}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gh-text-muted">
             <HardDrive className="h-4 w-4" />

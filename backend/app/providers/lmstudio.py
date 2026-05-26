@@ -14,7 +14,7 @@ class LMStudioProvider(BaseProvider):
             "stream": True,
             "temperature": 0.7
         }
-        print(message, model)
+        
         async with httpx.AsyncClient(
             timeout=None
         ) as client:
@@ -26,9 +26,11 @@ class LMStudioProvider(BaseProvider):
                 async for line in response.aiter_lines():
                     if not line:
                         continue
+                    
                     if line.startswith("event: "):
                         continue
                     if line.startswith("data: "):
+                        print(line)
                         line = line.replace(
                             "data: ",
                             ""

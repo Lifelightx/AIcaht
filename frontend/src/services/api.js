@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.13.73:5000/api';
 
 export const fetchChatResponse = async (message, model, onChunk) => {
   const response = await fetch(`${API_BASE_URL}/chat`, {
@@ -27,6 +27,21 @@ export const fetchChatResponse = async (message, model, onChunk) => {
     const chunk = decoder.decode(value, { stream: true });
     onChunk(chunk);
   }
+};
+
+export const fetchModelsApi = async () => {
+  const response = await fetch(`${API_BASE_URL}/models`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
 };
 
 export const loginApi = async (email, password) => {
