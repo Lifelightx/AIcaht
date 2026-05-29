@@ -1,20 +1,23 @@
 
 from app.factories.factory import ProviderFactory
 from app.config.models import MODEL_REGISTRY
-
-class ChatService:
+from fastapi import HTTPException
+class AIService:
     @staticmethod
-    async def stream_chat(message:str, model:str):
+    async def stream_response(messages:list, model:str):
         model_config = MODEL_REGISTRY.get(model)
         if not model_config:
-            raise ("Model not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Model not found"
+            )
         provider_name = model_config["provider"]
         actual_model_name = model_config["model_name"]
 
         provider = ProviderFactory.get_provider(provider_name)
 
         async for chunk in provider.stream(
-        message=message,
+        message=messages,
         model=actual_model_name
         ):
             yield chunk

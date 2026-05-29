@@ -23,12 +23,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gh-bg flex flex-col items-center pt-24 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-app-bg flex flex-col items-center pt-24 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-sm flex flex-col items-center">
         {/* Logo and Title */}
         <div className="mb-6 flex flex-col items-center">
-          <Terminal className="w-12 h-12 text-gh-text mb-6" />
-          <h1 className="text-2xl font-light text-gh-text tracking-tight">Sign in to AI Chat</h1>
+          <Terminal className="w-12 h-12 text-app-text mb-6" />
+          <h1 className="text-2xl font-light text-app-text tracking-tight">Sign in to AI Chat</h1>
         </div>
 
         {/* Error Message */}
@@ -39,10 +39,10 @@ export default function Login() {
         )}
 
         {/* Login Card */}
-        <div className="w-full bg-gh-bg-subtle border border-gh-border rounded-md p-4 shadow-sm mb-4">
+        <div className="w-full bg-app-bg-subtle border border-app-border rounded-md p-4 shadow-sm mb-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gh-text mb-1" htmlFor="email">
+              <label className="block text-sm font-medium text-app-text mb-1" htmlFor="email">
                 Email address
               </label>
               <input
@@ -51,16 +51,16 @@ export default function Login() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-1.5 bg-gh-bg border border-gh-border rounded-md text-gh-text text-sm focus:outline-none focus:ring-2 focus:ring-gh-accent focus:border-transparent transition-shadow"
+                className="w-full px-3 py-1.5 bg-app-bg border border-app-border rounded-md text-app-text text-sm focus:outline-none focus:ring-2 focus:ring-app-accent focus:border-transparent transition-shadow"
               />
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1">
-                <label className="block text-sm font-medium text-gh-text" htmlFor="password">
+                <label className="block text-sm font-medium text-app-text" htmlFor="password">
                   Password
                 </label>
-                {/* <a href="#" className="text-xs text-gh-accent hover:underline">Forgot password?</a> */}
+                {/* <a href="#" className="text-xs text-app-accent hover:underline">Forgot password?</a> */}
               </div>
               <input
                 id="password"
@@ -68,13 +68,13 @@ export default function Login() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-1.5 bg-gh-bg border border-gh-border rounded-md text-gh-text text-sm focus:outline-none focus:ring-2 focus:ring-gh-accent focus:border-transparent transition-shadow"
+                className="w-full px-3 py-1.5 bg-app-bg border border-app-border rounded-md text-app-text text-sm focus:outline-none focus:ring-2 focus:ring-app-accent focus:border-transparent transition-shadow"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full bg-gh-btn-primary hover:bg-gh-btn-primary-hover text-white font-medium py-1.5 px-4 rounded-md text-sm transition-colors border border-[rgba(27,31,36,0.15)] shadow-sm"
+              className="w-full bg-app-btn-primary hover:bg-app-btn-primary-hover text-white font-medium py-1.5 px-4 rounded-md text-sm transition-colors border border-[rgba(27,31,36,0.15)] shadow-sm"
             >
               Sign in
             </button>
@@ -82,9 +82,9 @@ export default function Login() {
         </div>
 
         {/* Sign up prompt */}
-        <div className="w-full border border-gh-border rounded-md p-4 text-center text-sm text-gh-text mt-2">
+        <div className="w-full border border-app-border rounded-md p-4 text-center text-sm text-app-text mt-2">
           New to AI Chat?{' '}
-          <Link to="/signup" className="text-gh-accent hover:underline">
+          <Link to="/signup" className="text-app-accent hover:underline">
             Create an account
           </Link>
           .

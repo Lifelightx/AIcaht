@@ -6,7 +6,7 @@ from datetime import(
 
 import jwt
 from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
-SECRET_KEY = "Admkh&6c$"
+SECRET_KEY = "Admkh&6c$werfghjRFGBUHGRFvfghjuyfdvb"
 ALGORITHM = "HS256"
 
 def create_token(data: dict):

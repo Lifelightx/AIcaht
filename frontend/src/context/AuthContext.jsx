@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for an existing user session on mount
     const storedUser = localStorage.getItem('chatAppUser');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -19,9 +18,8 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const response = await loginApi(email, password);
-      // Assuming response contains user details. Adjust based on your actual backend response schema.
-      // If your backend returns a token, you should store it here too (e.g., localStorage.setItem('token', response.access_token))
-      const userData = response.user || { email }; // Fallback if backend just returns success
+      // Backend login returns { token: "..." }
+      const userData = { email, token: response.token };
       setUser(userData);
       localStorage.setItem('chatAppUser', JSON.stringify(userData));
       return { success: true };
@@ -32,12 +30,9 @@ export function AuthProvider({ children }) {
 
   const signup = async (name, email, password) => {
     try {
-      const response = await signupApi(name, email, password);
-      // Automatically log in after signup (adjust based on what the API returns)
-      const userData = response.user || { name, email }; 
-      setUser(userData);
-      localStorage.setItem('chatAppUser', JSON.stringify(userData));
-      return { success: true };
+      await signupApi(name, email, password);
+      // Auto login after signup
+      return await login(email, password);
     } catch (error) {
       return { success: false, error: error.message };
     }

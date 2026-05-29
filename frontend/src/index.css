@@ -2,41 +2,41 @@
 @plugin "@tailwindcss/typography";
 
 @theme {
-  --color-gh-bg: #ffffff;
-  --color-gh-bg-subtle: #f6f8fa;
-  --color-gh-border: #d0d7de;
-  --color-gh-border-muted: hsla(210, 18%, 87%, 1);
-  --color-gh-text: #24292f;
-  --color-gh-text-muted: #57606a;
-  --color-gh-accent: #0969da;
-  --color-gh-success: #1a7f37;
-  --color-gh-btn-bg: #f6f8fa;
-  --color-gh-btn-border: rgba(27, 31, 36, 0.15);
-  --color-gh-btn-hover: #f3f4f6;
-  --color-gh-btn-primary: #2da44e;
-  --color-gh-btn-primary-hover: #2c974b;
+  --color-app-bg: #ffffff;
+  --color-app-bg-subtle: #f9f9f9;
+  --color-app-border: #e5e5e5;
+  --color-app-border-muted: #f0f0f0;
+  --color-app-text: #0d0d0d;
+  --color-app-text-muted: #6b6b6b;
+  --color-app-accent: #10a37f;
+  --color-app-success: #10a37f;
+  --color-app-btn-bg: #f9f9f9;
+  --color-app-btn-border: #e5e5e5;
+  --color-app-btn-hover: #ececec;
+  --color-app-btn-primary: #10a37f;
+  --color-app-btn-primary-hover: #0e906f;
 }
 
 @custom-variant dark (&:is(.dark *));
 
 @theme dark {
-  --color-gh-bg: #0d1117;
-  --color-gh-bg-subtle: #161b22;
-  --color-gh-border: #30363d;
-  --color-gh-border-muted: #21262d;
-  --color-gh-text: #c9d1d9;
-  --color-gh-text-muted: #8b949e;
-  --color-gh-accent: #58a6ff;
-  --color-gh-success: #3fb950;
-  --color-gh-btn-bg: #21262d;
-  --color-gh-btn-border: rgba(240, 246, 252, 0.1);
-  --color-gh-btn-hover: #30363d;
-  --color-gh-btn-primary: #238636;
-  --color-gh-btn-primary-hover: #2ea043;
+  --color-app-bg: #212121;
+  --color-app-bg-subtle: #171717;
+  --color-app-border: #2f2f2f;
+  --color-app-border-muted: #2f2f2f;
+  --color-app-text: #ececec;
+  --color-app-text-muted: #9b9b9b;
+  --color-app-accent: #10a37f;
+  --color-app-success: #10a37f;
+  --color-app-btn-bg: #2f2f2f;
+  --color-app-btn-border: #3f3f3f;
+  --color-app-btn-hover: #3f3f3f;
+  --color-app-btn-primary: #10a37f;
+  --color-app-btn-primary-hover: #0e906f;
 }
 
 body {
-  @apply bg-gh-bg text-gh-text font-sans antialiased;
+  @apply bg-app-bg text-app-text font-sans antialiased;
 }
 
 /* Custom Scrollbar for Webkit */
@@ -50,12 +50,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: var(--color-gh-border);
+  background-color: var(--color-app-border);
   border: 4px solid transparent;
   background-clip: padding-box;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-gh-text-muted);
+  background-color: var(--color-app-text-muted);
 }

@@ -2,13 +2,24 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import ChatArea from '../components/ChatArea';
-import { fetchModelsApi } from '../services/api';
+import { fetchModelsApi, fetchChats } from '../services/api';
 
 export default function ChatPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [selectedModel, setSelectedModel] = useState('');
   const [availableModels, setAvailableModels] = useState({});
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [chats, setChats] = useState([]);
+  const [currentChatId, setCurrentChatId] = useState(null);
+
+  const loadChats = async () => {
+    try {
+      const chatsData = await fetchChats();
+      setChats(chatsData);
+    } catch (error) {
+      console.error("Failed to fetch chats:", error);
+    }
+  };
 
   useEffect(() => {
     const loadModels = async () => {
@@ -25,6 +36,7 @@ export default function ChatPage() {
       }
     };
     loadModels();
+    loadChats();
   }, []);
 
   useEffect(() => {
@@ -55,11 +67,17 @@ export default function ChatPage() {
         availableModels={availableModels}
         isOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
+        chats={chats}
+        currentChatId={currentChatId}
+        setCurrentChatId={setCurrentChatId}
       />
       <ChatArea 
         selectedModel={selectedModel} 
         isSidebarOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
+        currentChatId={currentChatId}
+        setCurrentChatId={setCurrentChatId}
+        loadChats={loadChats}
       />
     </Layout>
   );
