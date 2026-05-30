@@ -63,6 +63,48 @@ const preprocessLaTeX = (content) => {
   return processed;
 };
 
+const MessageItem = React.memo(({ msg, isLoading }) => (
+  <div className={`flex gap-4 py-4 w-full group ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    {msg.role === 'assistant' && (
+      <div className="shrink-0 mt-1">
+        <div className="w-8 h-8 rounded-full bg-app-btn-primary flex items-center justify-center border border-app-border shadow-sm">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+      </div>
+    )}
+    
+    <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[85%]' : 'items-start flex-1 max-w-full'} min-w-0`}>
+      {msg.role === 'assistant' && (
+        <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
+          Nexus AI
+        </div>
+      )}
+      <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${
+        msg.role === 'user' 
+          ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm' 
+          : ''
+      }`}>
+        <ReactMarkdown
+          remarkPlugins={[remarkMath, remarkGfm]}
+          rehypePlugins={[rehypeKatex]}
+          components={{
+            code: CodeBlock
+          }}
+        >
+          {preprocessLaTeX(msg.content)}
+        </ReactMarkdown>
+        {isLoading && msg.role === 'assistant' && msg.content === '' && (
+          <div className="flex gap-1 items-center mt-2 h-4">
+            <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
+            <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '150ms' }}></span>
+            <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '300ms' }}></span>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+));
+
 const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, setCurrentChatId, loadChats }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -209,48 +251,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
         ) : (
           <div className="max-w-3xl mx-auto space-y-6 pb-4">
             {messages.map((msg, index) => (
-              <div 
-                key={msg.id || index} 
-                className={`flex gap-4 py-4 w-full group ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                {msg.role === 'assistant' && (
-                  <div className="shrink-0 mt-1">
-                    <div className="w-8 h-8 rounded-full bg-app-btn-primary flex items-center justify-center border border-app-border shadow-sm">
-                      <Bot className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                )}
-                
-                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[85%]' : 'items-start flex-1 max-w-full'} min-w-0`}>
-                  {msg.role === 'assistant' && (
-                    <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
-                      Nexus AI
-                    </div>
-                  )}
-                  <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${
-                    msg.role === 'user' 
-                      ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm' 
-                      : ''
-                  }`}>
-                    <ReactMarkdown
-                      remarkPlugins={[remarkMath, remarkGfm]}
-                      rehypePlugins={[rehypeKatex]}
-                      components={{
-                        code: CodeBlock
-                      }}
-                    >
-                      {preprocessLaTeX(msg.content)}
-                    </ReactMarkdown>
-                    {isLoading && msg.role === 'assistant' && msg.content === '' && (
-                      <div className="flex gap-1 items-center mt-2 h-4">
-                        <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                        <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                        <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <MessageItem key={msg.id || index} msg={msg} isLoading={isLoading} />
             ))}
             <div ref={messagesEndRef} />
           </div>
