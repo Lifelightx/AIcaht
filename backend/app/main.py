@@ -7,6 +7,7 @@ from app.routes import all_routers
 app = FastAPI(
     title="Local AI chat bot",
     version="1.0.0",
+    redirect_slashes=False,
 )
 
 app.add_middleware(

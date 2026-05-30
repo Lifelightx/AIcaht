@@ -105,10 +105,21 @@ const MessageItem = React.memo(({ msg, isLoading }) => (
   </div>
 ));
 
+const WaveLoader = () => (
+  <div className="flex items-center justify-center h-full w-full space-x-1.5 py-10">
+    <div className="w-1.5 h-1.5 bg-app-text-muted rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+    <div className="w-2.5 h-2.5 bg-app-text-muted rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+    <div className="w-3.5 h-3.5 bg-app-text-muted rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+    <div className="w-2.5 h-2.5 bg-app-text-muted rounded-full animate-bounce" style={{ animationDelay: '450ms' }}></div>
+    <div className="w-1.5 h-1.5 bg-app-text-muted rounded-full animate-bounce" style={{ animationDelay: '600ms' }}></div>
+  </div>
+);
+
 const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, setCurrentChatId, loadChats }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingMessages, setIsFetchingMessages] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const scrollContainerRef = useRef(null);
@@ -122,11 +133,14 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
         return;
       }
       const loadMessages = async () => {
+        setIsFetchingMessages(true);
         try {
           const fetchedMessages = await fetchChatMessages(currentChatId);
           setMessages(fetchedMessages);
         } catch(error) {
           console.error("Failed to fetch messages:", error);
+        } finally {
+          setIsFetchingMessages(false);
         }
       };
       loadMessages();
@@ -240,7 +254,9 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 md:p-6"
       >
-        {messages.length === 0 ? (
+        {isFetchingMessages ? (
+          <WaveLoader />
+        ) : messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-app-text-muted space-y-4">
             <div className="w-16 h-16 bg-app-bg-subtle rounded-full flex items-center justify-center border border-app-border shadow-sm">
               <Terminal className="w-8 h-8 text-app-text" />

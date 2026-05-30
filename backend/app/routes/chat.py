@@ -21,7 +21,7 @@ router = APIRouter(
     dependencies=[Depends(get_current_user)]
 )
 
-@router.get("/", response_model=list[ChatResponse])
+@router.get("", response_model=list[ChatResponse])
 async def get_chats(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
