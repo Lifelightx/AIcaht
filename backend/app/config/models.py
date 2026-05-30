@@ -4,7 +4,12 @@ MODEL_REGISTRY = {
         "provider": "ollama",
         "model_name": "qwen2.5"
     },
-
+    
+    "geema4-cloud":{
+        "provider":"ollama",
+        "model_name":"gemma4:31b-cloud"
+    }
+    ,
     "gemma4": {
         "provider": "lmstudio",
         "model_name": "google/gemma-4-e4b"
@@ -17,6 +22,5 @@ MODEL_REGISTRY = {
     "gemma2": {
         "provider": "ollama",
         "model_name": "gemma2:2b"
-    },
-    
+    }
 }

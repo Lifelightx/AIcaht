@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Terminal, Menu, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { fetchChatResponse, fetchChatMessages } from '../services/api';
@@ -47,6 +50,16 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
       {children}
     </code>
   );
+};
+
+const preprocessLaTeX = (content) => {
+  if (!content) return '';
+  let processed = content;
+  // Replace block math \[ ... \] with $$ ... $$
+  processed = processed.replace(/\\\[([\s\S]*?)\\\]/g, '$$$$$1$$$$');
+  // Replace inline math \( ... \) with $ ... $
+  processed = processed.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+  return processed;
 };
 
 const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, setCurrentChatId, loadChats }) => {
@@ -207,23 +220,25 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                   </div>
                 )}
                 
-                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[80%] min-w-0`}>
                   {msg.role === 'assistant' && (
                     <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
                       Nexus AI
                     </div>
                   )}
-                  <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none ${
+                  <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${
                     msg.role === 'user' 
                       ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm' 
                       : ''
                   }`}>
                     <ReactMarkdown
+                      remarkPlugins={[remarkMath]}
+                      rehypePlugins={[rehypeKatex]}
                       components={{
                         code: CodeBlock
                       }}
                     >
-                      {msg.content}
+                      {preprocessLaTeX(msg.content)}
                     </ReactMarkdown>
                     {isLoading && msg.role === 'assistant' && msg.content === '' && (
                       <div className="flex gap-1 items-center mt-2 h-4">
