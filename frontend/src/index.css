@@ -19,7 +19,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-@theme dark {
+.dark {
   --color-app-bg: #212121;
   --color-app-bg-subtle: #171717;
   --color-app-border: #2f2f2f;
@@ -30,9 +30,17 @@
   --color-app-success: #10a37f;
   --color-app-btn-bg: #2f2f2f;
   --color-app-btn-border: #3f3f3f;
-  --color-app-btn-hover: #3f3f3f;
+  --color-app-btn-hover: #2a2a2a;
   --color-app-btn-primary: #10a37f;
   --color-app-btn-primary-hover: #0e906f;
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {

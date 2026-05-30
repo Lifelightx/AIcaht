@@ -13,7 +13,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     const result = await login(email, password);
     if (result.success) {
       navigate('/');
@@ -26,9 +26,9 @@ export default function Login() {
     <div className="min-h-screen bg-app-bg flex flex-col items-center pt-24 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-sm flex flex-col items-center">
         {/* Logo and Title */}
-        <div className="mb-6 flex flex-col items-center">
+        <div className="mb-10 flex flex-col items-center">
           <Terminal className="w-12 h-12 text-app-text mb-6" />
-          <h1 className="text-2xl font-light text-app-text tracking-tight">Sign in to AI Chat</h1>
+          <h1 className="text-2xl font-light text-app-text tracking-tight">Welcome back to Nexus AI</h1>
         </div>
 
         {/* Error Message */}

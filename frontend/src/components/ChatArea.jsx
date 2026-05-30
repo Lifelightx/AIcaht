@@ -1,7 +1,53 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Terminal, Menu } from 'lucide-react';
+import { Send, Bot, User, Terminal, Menu, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { fetchChatResponse, fetchChatMessages } from '../services/api';
+
+const CodeBlock = ({ node, inline, className, children, ...props }) => {
+  const [isCopied, setIsCopied] = useState(false);
+  const match = /language-(\w+)/.exec(className || '');
+  const codeString = String(children).replace(/\n$/, '');
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(codeString);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  if (!inline && match) {
+    return (
+      <div className="rounded-md overflow-hidden border border-app-border my-4 shadow-sm text-[13px]">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-[#2d2d2d] text-[#858585] text-xs font-mono">
+          <span>{match[1]}</span>
+          <button 
+            onClick={handleCopy}
+            className="flex items-center gap-1.5 hover:text-[#cccccc] transition-colors focus:outline-none"
+            aria-label="Copy code"
+          >
+            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{isCopied ? 'Copied!' : 'Copy'}</span>
+          </button>
+        </div>
+        <SyntaxHighlighter
+          {...props}
+          children={codeString}
+          style={vscDarkPlus}
+          language={match[1]}
+          PreTag="div"
+          customStyle={{ margin: 0, borderRadius: 0, background: '#1e1e1e' }}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <code {...props} className={`${className || ''} bg-app-bg-subtle px-1.5 py-0.5 rounded-md border border-app-border font-mono text-[13px]`}>
+      {children}
+    </code>
+  );
+};
 
 const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, setCurrentChatId, loadChats }) => {
   const [messages, setMessages] = useState([]);
@@ -11,9 +57,14 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
   const textareaRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const shouldAutoScroll = useRef(true);
+  const newlyCreatedChatId = useRef(null);
 
   useEffect(() => {
     if (currentChatId) {
+      if (newlyCreatedChatId.current === currentChatId) {
+        newlyCreatedChatId.current = null;
+        return;
+      }
       const loadMessages = async () => {
         try {
           const fetchedMessages = await fetchChatMessages(currentChatId);
@@ -77,6 +128,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
         },
         (newChatId) => {
           if (!initialChatId) {
+            newlyCreatedChatId.current = newChatId;
             setCurrentChatId(newChatId);
             initialChatId = newChatId;
             loadChats();
@@ -145,26 +197,34 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
             {messages.map((msg, index) => (
               <div 
                 key={msg.id || index} 
-                className="flex gap-4 py-6 w-full group"
+                className={`flex gap-4 py-4 w-full group ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className="shrink-0 mt-1">
-                  {msg.role === 'user' ? (
-                    <div className="w-8 h-8 rounded-full bg-app-border-muted flex items-center justify-center border border-app-border">
-                      <User className="w-5 h-5 text-app-text" />
-                    </div>
-                  ) : (
+                {msg.role === 'assistant' && (
+                  <div className="shrink-0 mt-1">
                     <div className="w-8 h-8 rounded-full bg-app-btn-primary flex items-center justify-center border border-app-border shadow-sm">
                       <Bot className="w-5 h-5 text-white" />
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex-1 overflow-hidden">
-                  <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
-                    {msg.role === 'user' ? 'You' : 'Nexus AI'}
                   </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:bg-app-bg-subtle prose-pre:border prose-pre:border-app-border">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                )}
+                
+                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                  {msg.role === 'assistant' && (
+                    <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
+                      Nexus AI
+                    </div>
+                  )}
+                  <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none ${
+                    msg.role === 'user' 
+                      ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm' 
+                      : ''
+                  }`}>
+                    <ReactMarkdown
+                      components={{
+                        code: CodeBlock
+                      }}
+                    >
+                      {msg.content}
+                    </ReactMarkdown>
                     {isLoading && msg.role === 'assistant' && msg.content === '' && (
                       <div className="flex gap-1 items-center mt-2 h-4">
                         <span className="w-2 h-2 rounded-full bg-app-text-muted animate-bounce" style={{ animationDelay: '0ms' }}></span>

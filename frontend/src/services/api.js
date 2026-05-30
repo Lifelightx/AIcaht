@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.13.73:5000/api';
 
 const getAuthHeaders = () => {
   const storedUser = localStorage.getItem('chatAppUser');
@@ -139,7 +139,7 @@ export const loginApi = async (email, password) => {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Login failed with status ${response.status}`);
   }
-
+  
   return response.json();
 };
 

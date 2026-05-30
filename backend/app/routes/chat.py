@@ -17,7 +17,8 @@ from app.utils.dependencies import get_current_user
 from app.db.models.user import User
 router = APIRouter(
     prefix="/api/chats",
-    tags=["chats"]
+    tags=["chats"],
+    dependencies=[Depends(get_current_user)]
 )
 
 @router.get("/", response_model=list[ChatResponse])
