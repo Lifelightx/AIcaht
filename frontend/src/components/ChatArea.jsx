@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Terminal, Menu, Copy, Check } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { fetchChatResponse, fetchChatMessages } from '../services/api';
 
 const CodeBlock = ({ node, inline, className, children, ...props }) => {
@@ -21,8 +22,8 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
 
   if (!inline && match) {
     return (
-      <div className="rounded-md overflow-hidden border border-app-border my-4 shadow-sm text-[13px]">
-        <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-[#2d2d2d] text-[#858585] text-xs font-mono">
+      <div className="rounded-md overflow-hidden border border-app-border my-4 shadow-sm text-sm">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#282c34] border-b border-[#3e4451] text-[#abb2bf] text-xs font-mono">
           <span>{match[1]}</span>
           <button 
             onClick={handleCopy}
@@ -36,17 +37,17 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
         <SyntaxHighlighter
           {...props}
           children={codeString}
-          style={vscDarkPlus}
+          style={oneDark}
           language={match[1]}
           PreTag="div"
-          customStyle={{ margin: 0, borderRadius: 0, background: '#1e1e1e' }}
+          customStyle={{ margin: 0, borderRadius: 0, background: '#282c34', fontSize: '14.5px', lineHeight: '1.5' }}
         />
       </div>
     );
   }
 
   return (
-    <code {...props} className={`${className || ''} bg-app-bg-subtle px-1.5 py-0.5 rounded-md border border-app-border font-mono text-[13px]`}>
+    <code {...props} className={`${className || ''} bg-app-bg-subtle px-1.5 py-0.5 rounded-md border border-app-border font-mono text-sm`}>
       {children}
     </code>
   );
@@ -220,7 +221,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                   </div>
                 )}
                 
-                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[80%] min-w-0`}>
+                <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[85%]' : 'items-start flex-1 max-w-full'} min-w-0`}>
                   {msg.role === 'assistant' && (
                     <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
                       Nexus AI
@@ -232,7 +233,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                       : ''
                   }`}>
                     <ReactMarkdown
-                      remarkPlugins={[remarkMath]}
+                      remarkPlugins={[remarkMath, remarkGfm]}
                       rehypePlugins={[rehypeKatex]}
                       components={{
                         code: CodeBlock
@@ -258,7 +259,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
       {/* Input Area */}
       <div className="p-4 bg-gradient-to-t from-app-bg pt-8">
-        <div className="max-w-3xl mx-auto relative group">
+        <div className="max-w-4xl mx-auto relative group">
           <form onSubmit={handleSubmit} className="relative flex items-end shadow-md rounded-2xl bg-app-bg-subtle border border-app-border">
             <textarea
               value={input}
