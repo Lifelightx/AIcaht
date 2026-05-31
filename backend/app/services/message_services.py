@@ -119,7 +119,7 @@ class MessageService:
         )
         history_result = await db.execute(history_query)
         history = history_result.scalars().all()
-        history = history[-10:]
+        history = history[-5:]
         formatted_message = [
             {
                 "role":msg.role,

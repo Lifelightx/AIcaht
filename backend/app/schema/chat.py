@@ -11,5 +11,6 @@ class ChatResponse(BaseModel):
     
 
 
-
+class RenameRequest(BaseModel):
+    title: str
 

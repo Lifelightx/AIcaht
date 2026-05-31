@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import StreamingResponse
-from app.schema.chat import ChatRequest
-from app.services.ai_services import AIService
+from app.schema.chat import ChatRequest, RenameRequest
+
 from app.db.dependency import get_db
 from app.schema.chat import ChatResponse
 from app.services.message_services import MessageService
@@ -82,3 +82,43 @@ async def stream_message(
         generator,
         media_type="plain/text"
     )
+
+
+@router.delete("/{chat_id}")
+async def delete_chat(
+
+    chat_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    sucess = await ChatService.delete_chat(
+        db=db,
+        chat_id=chat_id,
+        user_id=current_user.id
+    )
+    if not sucess:
+        raise HTTPException(
+            status_code=404,
+            detail="chat not found or unauthorized"
+        )
+    return {"message": "chat deleted sucessfully"}
+
+@router.patch("/{chat_id}/rename")
+async def rename_chat(
+    chat_id:int,
+    request: RenameRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user:User = Depends(get_current_user)
+):
+    renamed_chat = await ChatService.rename_chat(
+        db=db,
+        chat_id=chat_id,
+        user_id=current_user.id,
+        new_title=request.title
+    )
+    if renamed_chat is None:
+        raise HTTPException(
+            status_code=404,
+            detail="chat not found or anauthorized"
+        )
+    return {"id":renamed_chat.id, "title": renamed_chat.title}

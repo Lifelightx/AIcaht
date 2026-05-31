@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import Sidebar from '../components/Sidebar';
 import ChatArea from '../components/ChatArea';
-import { fetchModelsApi, fetchChats } from '../services/api';
+import { fetchModelsApi, fetchChats, deleteChatApi, renameChatApi } from '../services/api';
 
 export default function ChatPage() {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -18,6 +18,27 @@ export default function ChatPage() {
       setChats(chatsData);
     } catch (error) {
       console.error("Failed to fetch chats:", error);
+    }
+  };
+
+  const handleDeleteChat = async (chatId) => {
+    try {
+      await deleteChatApi(chatId);
+      if (currentChatId === chatId) {
+        setCurrentChatId(null);
+      }
+      await loadChats();
+    } catch (error) {
+      console.error("Failed to delete chat:", error);
+    }
+  };
+
+  const handleRenameChat = async (chatId, newTitle) => {
+    try {
+      await renameChatApi(chatId, newTitle);
+      await loadChats();
+    } catch (error) {
+      console.error("Failed to rename chat:", error);
     }
   };
 
@@ -70,6 +91,8 @@ export default function ChatPage() {
         chats={chats}
         currentChatId={currentChatId}
         setCurrentChatId={setCurrentChatId}
+        onDeleteChat={handleDeleteChat}
+        onRenameChat={handleRenameChat}
       />
       <ChatArea 
         selectedModel={selectedModel} 

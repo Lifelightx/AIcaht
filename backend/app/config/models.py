@@ -3,8 +3,15 @@ MODEL_REGISTRY = {
     "geema4-cloud":{
         "provider":"ollama",
         "model_name":"gemma4:31b-cloud"
-    }
-    ,
+    },
+    "qwen-coder":{
+        "provider":"ollama",
+        "model_name":"qwen3-coder:480b-cloud"
+    },
+    "gpt-oss":{
+        "provider":"ollama",
+        "model_name":"gpt-oss:120b-cloud"
+    },
     "qwen": {
         "provider": "ollama",
         "model_name": "qwen2.5"

@@ -31,3 +31,36 @@ class ChatService:
 
         result = await db.execute(query)
         return result.scalars().all()
+
+    @staticmethod
+    async def delete_chat(db: AsyncSession,chat_id: int, user_id:int):
+        query = select(Chat).where(Chat.id == chat_id , Chat.user_id == user_id)
+        result = await db.execute(query)
+        chat = result.scalar_one_or_none()
+        if chat == None:
+            return False
+        if chat:
+            await db.delete(chat)
+            await db.commit()
+            return True
+        return False
+    
+    @staticmethod
+    async def rename_chat(
+        db:AsyncSession,
+        chat_id: int,
+        user_id:int,
+        new_title: str
+    ):
+        query = select(Chat).where(
+            Chat.id == chat_id,
+            Chat.user_id == user_id
+        )
+        result = await db.execute(query)
+        chat = result.scalar_one_or_none()
+        if chat:
+            chat.title = new_title
+            await db.commit()
+            await db.refresh(chat)
+            return chat
+        return None

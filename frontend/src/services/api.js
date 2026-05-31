@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://192.168.13.73:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const getAuthHeaders = () => {
   const storedUser = localStorage.getItem('chatAppUser');
@@ -155,6 +155,39 @@ export const signupApi = async (name, email, password) => {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.detail || `Signup failed with status ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const deleteChatApi = async (chatId) => {
+  const response = await fetch(`${API_BASE_URL}/chats/${chatId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const renameChatApi = async (chatId, title) => {
+  const response = await fetch(`${API_BASE_URL}/chats/${chatId}/rename`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ title }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
   }
 
   return response.json();

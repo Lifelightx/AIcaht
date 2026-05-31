@@ -1,13 +1,27 @@
-import React, { useState } from 'react';
-import { MessageSquare, Settings, Moon, Sun, Plus, Terminal, HardDrive, LogOut, ChevronUp, ChevronDown, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { MessageSquare, Settings, Moon, Sun, Plus, Terminal, HardDrive, LogOut, ChevronUp, ChevronDown, User, Trash2, Pencil, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
-const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, availableModels = {}, isOpen, toggleSidebar, chats = [], currentChatId, setCurrentChatId }) => {
+const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, availableModels = {}, isOpen, toggleSidebar, chats = [], currentChatId, setCurrentChatId, onDeleteChat, onRenameChat }) => {
   const { logout, user } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   
+  const [chatToDelete, setChatToDelete] = useState(null);
+  const [editingChatId, setEditingChatId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    if (openMenuId) {
+      document.addEventListener('click', handleClickOutside);
+    }
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [openMenuId]);
+
   return (
+    <>
     <div className={`border-r border-app-border bg-app-bg-subtle flex flex-col h-full flex-shrink-0 transition-all duration-300 ease-in-out ${isOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 overflow-hidden border-none'}`}>
       {/* Header */}
       <div className="p-4 border-b border-app-border flex items-center justify-between">
@@ -77,20 +91,91 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
         </label>
         <div className="space-y-0.5">
           {chats.map(chat => (
-            <button 
-              key={chat.id}
-              onClick={() => setCurrentChatId(chat.id)}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left transition-colors rounded-md group ${
-                currentChatId === chat.id 
-                  ? 'bg-app-bg border border-app-border text-app-text shadow-sm font-medium' 
-                  : 'text-app-text hover:bg-app-btn-hover border border-transparent'
-              }`}
-            >
-              <MessageSquare className={`w-4 h-4 ${currentChatId === chat.id ? 'text-app-text-muted' : 'text-app-text-muted group-hover:text-app-text'}`} />
-              <span className={`truncate ${currentChatId === chat.id ? '' : 'text-app-text-muted group-hover:text-app-text'}`}>
-                {chat.title}
-              </span>
-            </button>
+            <div key={chat.id} className="relative group w-full flex items-center">
+              <button 
+                onClick={() => setCurrentChatId(chat.id)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 text-sm text-left transition-colors rounded-md ${
+                  currentChatId === chat.id 
+                    ? 'bg-app-bg border border-app-border text-app-text shadow-sm font-medium' 
+                    : 'text-app-text hover:bg-app-btn-hover border border-transparent'
+                } pr-8`}
+              >
+                <MessageSquare className={`w-4 h-4 shrink-0 ${currentChatId === chat.id ? 'text-app-text-muted' : 'text-app-text-muted group-hover:text-app-text'}`} />
+                {editingChatId === chat.id ? (
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={() => {
+                      if (editTitle.trim() && editTitle.trim() !== chat.title) {
+                        onRenameChat(chat.id, editTitle.trim());
+                      }
+                      setEditingChatId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        if (editTitle.trim() && editTitle.trim() !== chat.title) {
+                          onRenameChat(chat.id, editTitle.trim());
+                        }
+                        setEditingChatId(null);
+                      } else if (e.key === 'Escape') {
+                        setEditingChatId(null);
+                      }
+                    }}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex-1 bg-transparent border-none focus:ring-0 text-app-text outline-none truncate"
+                  />
+                ) : (
+                  <span className={`truncate ${currentChatId === chat.id ? '' : 'text-app-text-muted group-hover:text-app-text'}`}>
+                    {chat.title}
+                  </span>
+                )}
+              </button>
+              <div className={`absolute right-1 flex items-center ${openMenuId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenMenuId(openMenuId === chat.id ? null : chat.id);
+                  }}
+                  className={`p-1 transition-all rounded ${openMenuId === chat.id ? 'text-app-text bg-app-border/50' : 'text-app-text-muted hover:text-app-text hover:bg-app-border/50'}`}
+                  title="More options"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                </button>
+
+                {openMenuId === chat.id && (
+                  <div 
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute right-0 top-full mt-1 w-32 bg-app-bg border border-app-border rounded-md shadow-lg py-1 z-50"
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingChatId(chat.id);
+                        setEditTitle(chat.title);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-app-text hover:bg-app-btn-hover flex items-center gap-2"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      Rename
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setChatToDelete(chat);
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-app-btn-hover flex items-center gap-2"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -146,6 +231,36 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
         )}
       </div>
     </div>
+
+      {/* Delete Confirmation Modal */}
+      {chatToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-app-bg border border-app-border rounded-lg shadow-xl w-full max-w-sm p-6 animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-semibold text-app-text mb-2">Delete Chat</h3>
+            <p className="text-app-text-muted text-sm mb-6">
+              Are you sure you want to delete <span className="font-medium text-app-text">"{chatToDelete.title}"</span>? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => setChatToDelete(null)}
+                className="px-4 py-2 text-sm font-medium text-app-text hover:bg-app-bg-subtle border border-app-border rounded-md transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  onDeleteChat(chatToDelete.id);
+                  setChatToDelete(null);
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors shadow-sm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
