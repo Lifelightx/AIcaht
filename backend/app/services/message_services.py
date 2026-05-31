@@ -10,8 +10,10 @@ from app.db.models.message import Message
 
 import json
 from app.services.ai_services import AIService
+from .router_service import RouterService
+from .search_service import SearchService
 from app.services.title_service import TitleService
-
+from app.config.keyword import keyword_search
 class MessageService:
 
     @staticmethod
@@ -44,6 +46,23 @@ class MessageService:
             "content": message
         }
      ]
+     needs_internet = (
+            keyword_search(message)
+            or await RouterService.needs_internet(message)
+        )
+     if needs_internet:
+         search_result = await SearchService.internet_search(
+             message
+         )
+         formatted_messages.append({
+             "role":"system",
+             "content":f"""
+                        use the following internet information.
+                        {search_result}
+                        Answer using these results.
+                        """
+         })
+
      full_response = ""
      async for chunk in AIService.stream_response(
         messages=formatted_messages,
@@ -120,21 +139,54 @@ class MessageService:
         history_result = await db.execute(history_query)
         history = history_result.scalars().all()
         history = history[-5:]
-        formatted_message = [
+        formatted_messages = [
             {
                 "role":msg.role,
                 "content": msg.content
             }
             for msg in history
         ]
+        
+        keyword_result = keyword_search(message)
+        router_result = await RouterService.needs_internet(message)
+
+        print(
+         f"keyword_search={keyword_result}, "
+            f"router_service={router_result}"
+        )
+
+        needs_internet = keyword_result or router_result
+        print("needs_internet_result from msg_service: ", needs_internet)
+        
+        if needs_internet:
+            search_result = await SearchService.internet_search(
+                 message
+            )
+            print(search_result)
+            formatted_messages.append({
+             "role":"system",
+             "content":f"""
+                        use the following internet information.
+                        {search_result}
+                        Answer using these results.
+                        Instructions:
+                        - Use only factual information.
+                        - Ignore speculative articles.
+                        - Prefer official sources.
+                        - Prefer Wikipedia and government websites.
+                        - If search results disagree, mention uncertainty.
+                        - Do not invent facts.
+                        """
+            })
         if chat.title == "New chat":
             generated_title = TitleService.generate_title(message)
             chat.title = generated_title
             await db.commit()
+        
 
         full_response = ""
         async for chunk in AIService.stream_response(
-            messages=formatted_message,
+            messages=formatted_messages,
             model=model
         ):
             full_response +=chunk

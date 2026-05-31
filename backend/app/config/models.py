@@ -30,3 +30,15 @@ MODEL_REGISTRY = {
         "model_name": "gemma2:2b"
     }
 }
+
+MODEL_REGISTRY_INT = {
+    "qwen2.5:0.5b-instruct": {
+        "provider": "ollama",
+        "model_name": "qwen2.5:0.5b-instruct"
+    },
+    "ministral-3:3b-cloud":{
+        "provider":"ollama",
+        "model_name":"ministral-3:3b-cloud"
+    },
+    
+}

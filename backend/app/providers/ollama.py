@@ -37,3 +37,20 @@ class OllamaProvider(BaseProvider):
                             yield token
                     except Exception as e:
                         print(e)
+    
+    async def generate(self, messages, model):
+        payload = {
+            "model":model,
+            "messages":messages,
+            "stream":False
+        }
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                OLLAMA_URL,
+                timeout=None,
+                json=payload
+            )
+            response.raise_for_status()
+            data = response.json()
+            print(data)
+            return data["message"]["content"]
