@@ -47,7 +47,7 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
   }
 
   return (
-    <code {...props} className={`${className || ''} bg-app-bg-subtle px-1.5 py-0.5 rounded-md border border-app-border font-mono text-sm`}>
+    <code {...props} className={`${className || ''} bg-black/5 dark:bg-white/10 px-1.5 py-0.5 rounded-md font-mono text-[0.875em]`}>
       {children}
     </code>
   );

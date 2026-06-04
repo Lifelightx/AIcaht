@@ -56,3 +56,8 @@ class AuthService:
             "token": access_token,
             "token_type": "bearer"
         }
+    
+
+    @staticmethod
+    async def update_user():
+        pass

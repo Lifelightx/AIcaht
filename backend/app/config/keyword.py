@@ -8,7 +8,10 @@ SEARCH_KEYWORDS = [
     "weather",
     "score",
     "match",
-    "ipl",
+    "2026",
+    "2025",
+    "minister",
+    "time",
     "stock",
     "bitcoin",
     "version"

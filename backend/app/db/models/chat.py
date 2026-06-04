@@ -38,3 +38,8 @@ class Chat(Base):
         back_populates="chat",
         cascade="all, delete-orphan"
     )
+    documents = relationship(
+    "Document",
+    back_populates="chat",
+    cascade="all, delete-orphan"
+    )

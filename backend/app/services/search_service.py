@@ -1,21 +1,36 @@
-from ddgs import DDGS
+from tavily import TavilyClient
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
 
 class SearchService:
+
+    client = TavilyClient(
+        api_key=os.getenv("TAVILY_API_KEY")
+    )
+
     @staticmethod
-    async def internet_search(query: str)->str:
-        result = []
-        with DDGS() as ddgs:
-            search_results = ddgs.text(
-                query,
+    async def internet_search(query: str) -> str:
+        try:
+            response = SearchService.client.search(
+                query=query,
+                search_depth="advanced",
                 max_results=5
             )
-            for item in search_results:
-                result.append(
+            results = []
+            for item in response.get("results", []):
+                results.append(
                     f"""
-                Title: {item.get("title")}
-                Body: {item.get("body")}
-                URL: {item.get("href")}
+                    Title: {item.get('title')}
+
+                    Content: {item.get('content')}
+
+                    URL: {item.get('url')}
                     """
                 )
-            
-            return "\n\n".join(result)
+            return "\n\n".join(results)
+        except Exception as e:
+            print("Tavily Search Error:", e)
+            return "No search results found."
