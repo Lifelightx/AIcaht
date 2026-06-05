@@ -192,3 +192,70 @@ export const renameChatApi = async (chatId, title) => {
 
   return response.json();
 };
+
+export const uploadDocumentApi = async (chatId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${API_BASE_URL}/docs/chat/${chatId}`, {
+    method: 'POST',
+    headers: {
+      ...getAuthHeaders() // Do NOT set Content-Type to application/json, browser sets multipart/form-data
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const getChatDocumentsApi = async (chatId) => {
+  const response = await fetch(`${API_BASE_URL}/docs/chat/${chatId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const deleteDocumentApi = async (documentId) => {
+  const response = await fetch(`${API_BASE_URL}/docs/${documentId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const getDocumentStatusApi = async (documentId) => {
+  const response = await fetch(`${API_BASE_URL}/docs/${documentId}/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};

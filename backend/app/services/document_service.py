@@ -104,7 +104,7 @@ class DocumentService:
         await db.commit()
         print("document status is set now to: ",document.status)
         return {
-            "document_id": document.id,
+            "id": document.id,
             "filename": document.filename,
             "total_pages": document.total_pages,
             "total_chunks": total_chunks,
@@ -206,7 +206,7 @@ class DocumentService:
             )
         
         return {
-         "document_id": document.id,
+         "id": document.id,
          "filename": document.filename,
          "status": document.status
         }

@@ -25,7 +25,7 @@ class DocumentEmbeddingService:
         chunks = result.scalars().all()
         for chunk in chunks:
             chunk.embedding = (
-                EmbeddingService.generate_embedding(
+                EmbeddingService.generate_embeddings(
                     chunk.content
                 )
             )

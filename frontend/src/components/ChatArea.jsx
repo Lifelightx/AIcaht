@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Terminal, Menu, Copy, Check } from 'lucide-react';
+import { Send, Bot, User, Terminal, Menu, Copy, Check, Paperclip, FileText, X, Loader2, CheckCircle2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { fetchChatResponse, fetchChatMessages } from '../services/api';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { fetchChatResponse, fetchChatMessages, uploadDocumentApi, getChatDocumentsApi, deleteDocumentApi, getDocumentStatusApi } from '../services/api';
 
 const CodeBlock = ({ node, inline, className, children, ...props }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -23,24 +23,24 @@ const CodeBlock = ({ node, inline, className, children, ...props }) => {
   if (!inline && match) {
     return (
       <div className="rounded-md overflow-hidden border border-app-border my-4 shadow-sm text-sm">
-        <div className="flex items-center justify-between px-4 py-2 bg-[#282c34] border-b border-[#3e4451] text-[#abb2bf] text-xs font-mono">
+        <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-[#333333] text-[#cccccc] text-xs font-mono">
           <span>{match[1]}</span>
-          <button 
+          <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 hover:text-[#cccccc] transition-colors focus:outline-none"
+            className="flex items-center gap-1.5 hover:text-white transition-colors focus:outline-none"
             aria-label="Copy code"
           >
-            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+            {isCopied ? <Check className="w-3.5 h-3.5 text-green-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{isCopied ? 'Copied!' : 'Copy'}</span>
           </button>
         </div>
         <SyntaxHighlighter
           {...props}
           children={codeString}
-          style={oneDark}
+          style={vscDarkPlus}
           language={match[1]}
           PreTag="div"
-          customStyle={{ margin: 0, borderRadius: 0, background: '#282c34', fontSize: '14.5px', lineHeight: '1.5' }}
+          customStyle={{ margin: 0, borderRadius: 0, background: '#1e1e1e', fontSize: '14.5px', lineHeight: '1.5' }}
         />
       </div>
     );
@@ -72,18 +72,17 @@ const MessageItem = React.memo(({ msg, isLoading }) => (
         </div>
       </div>
     )}
-    
+
     <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[85%]' : 'items-start flex-1 max-w-full'} min-w-0`}>
       {msg.role === 'assistant' && (
         <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
           Nexus AI
         </div>
       )}
-      <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${
-        msg.role === 'user' 
-          ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm' 
+      <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${msg.role === 'user'
+          ? 'bg-app-bg-subtle border border-app-border px-4 py-2.5 rounded-2xl shadow-sm'
           : ''
-      }`}>
+        }`}>
         <ReactMarkdown
           remarkPlugins={[remarkMath, remarkGfm]}
           rehypePlugins={[rehypeKatex]}
@@ -120,8 +119,11 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
+  const [documents, setDocuments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+  const fileInputRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const shouldAutoScroll = useRef(true);
   const newlyCreatedChatId = useRef(null);
@@ -137,7 +139,17 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
         try {
           const fetchedMessages = await fetchChatMessages(currentChatId);
           setMessages(fetchedMessages);
-        } catch(error) {
+
+          try {
+            const docsRes = await getChatDocumentsApi(currentChatId);
+            if (docsRes && docsRes.data) {
+              setDocuments(docsRes.data);
+            }
+          } catch (e) {
+            console.error("Failed to fetch documents", e);
+          }
+
+        } catch (error) {
           console.error("Failed to fetch messages:", error);
         } finally {
           setIsFetchingMessages(false);
@@ -146,6 +158,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
       loadMessages();
     } else {
       setMessages([]);
+      setDocuments([]);
     }
   }, [currentChatId]);
 
@@ -163,11 +176,41 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, documents]);
+
+  // Polling for document status
+  useEffect(() => {
+    const pendingDocs = documents.filter(d => d.status !== 'EMBEDDED' && d.status !== 'FAILED');
+    if (pendingDocs.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      const updatedDocs = await Promise.all(
+        pendingDocs.map(async (doc) => {
+          try {
+            const statusData = await getDocumentStatusApi(doc.id);
+            return { ...doc, status: statusData.status };
+          } catch (e) {
+            return doc;
+          }
+        })
+      );
+
+      setDocuments(prevDocs =>
+        prevDocs.map(doc => {
+          const updatedDoc = updatedDocs.find(d => d.id === doc.id);
+          return updatedDoc ? updatedDoc : doc;
+        })
+      );
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(intervalId);
+  }, [documents]);
+
+  const isAnyDocumentProcessing = documents.some(d => d.status !== 'EMBEDDED' && d.status !== 'FAILED');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isAnyDocumentProcessing) return;
 
     shouldAutoScroll.current = true;
     const userMessage = { role: 'user', content: input };
@@ -185,12 +228,12 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
     try {
       await fetchChatResponse(
-        userMessage.content, 
-        selectedModel, 
+        userMessage.content,
+        selectedModel,
         (chunk) => {
-          setMessages(prev => 
-            prev.map(msg => 
-              msg.id === botMessageId 
+          setMessages(prev =>
+            prev.map(msg =>
+              msg.id === botMessageId
                 ? { ...msg, content: msg.content + chunk }
                 : msg
             )
@@ -208,9 +251,9 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
       );
     } catch (error) {
       console.error('Chat error:', error);
-      setMessages(prev => 
-        prev.map(msg => 
-          msg.id === botMessageId 
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === botMessageId
             ? { ...msg, content: 'Sorry, I encountered an error. Please ensure the backend is running.' }
             : msg
         )
@@ -227,12 +270,69 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentChatId) return;
+
+    setIsUploading(true);
+    try {
+      const res = await uploadDocumentApi(currentChatId, file);
+      if (res && res.data) {
+        setDocuments(prev => [...prev, res.data]);
+      }
+    } catch (error) {
+      console.error("Failed to upload document", error);
+      alert("Failed to upload document. Please try again.");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleRemoveDocument = async (documentId) => {
+    try {
+      await deleteDocumentApi(documentId);
+      setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    } catch (error) {
+      console.error("Failed to remove document", error);
+    }
+  };
+
+  const DocumentItem = ({ doc }) => (
+    <div className="bg-app-bg-subtle border border-app-border px-3 py-2 rounded-xl shadow-sm flex items-center gap-3 w-fit max-w-[280px]">
+      <div className="p-1.5 bg-app-bg rounded-lg shrink-0 shadow-sm border border-app-border/50">
+        <FileText className="w-4 h-4 text-app-btn-primary" />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="text-sm font-semibold text-app-text truncate leading-tight">{doc.filename}</span>
+        <span className="text-[10px] text-app-text-muted mt-0.5 flex items-center gap-1 font-medium">
+          {doc.status === 'EMBEDDED' ? (
+            <><CheckCircle2 className="w-3 h-3 text-green-500" /> Ready for questions</>
+          ) : doc.status === 'FAILED' ? (
+            <><X className="w-3 h-3 text-red-500" /> Processing failed</>
+          ) : (
+            <><Loader2 className="w-3 h-3 animate-spin text-app-btn-primary" /> Processing...</>
+          )}
+        </span>
+      </div>
+      <button
+        onClick={() => handleRemoveDocument(doc.id)}
+        className="shrink-0 p-1 hover:bg-app-bg rounded-md text-app-text-muted hover:text-red-400 transition-colors border border-transparent hover:border-red-400/20"
+        title="Remove document"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+
   return (
     <div className="flex-1 flex flex-col h-full bg-app-bg">
       {/* Top Navigation */}
       <div className="h-14 border-b border-app-border flex items-center px-6 shrink-0 bg-app-bg">
         {!isSidebarOpen && (
-          <button 
+          <button
             onClick={toggleSidebar}
             className="mr-4 text-app-text-muted hover:text-app-text transition-colors focus:outline-none"
             aria-label="Open Sidebar"
@@ -249,7 +349,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
       </div>
 
       {/* Messages Area */}
-      <div 
+      <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
         className="flex-1 overflow-y-auto p-4 md:p-6"
@@ -276,15 +376,42 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
       {/* Input Area */}
       <div className="p-4 bg-gradient-to-t from-app-bg pt-8">
-        <div className="max-w-4xl mx-auto relative group">
+        <div className="max-w-4xl mx-auto relative group flex flex-col gap-2">
+          {documents.length > 0 && (
+            <div className="flex flex-wrap gap-2 px-2 pb-1">
+              {documents.map(doc => (
+                <DocumentItem key={`doc-${doc.id}`} doc={doc} />
+              ))}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="relative flex items-end shadow-md rounded-2xl bg-app-bg-subtle border border-app-border">
+            {currentChatId && (
+              <div className="absolute left-3 bottom-3 flex items-center justify-center">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  accept=".txt,.md,.pdf,.csv,.doc,.docx"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading || !currentChatId}
+                  className="p-2 rounded-xl text-app-text-muted hover:text-app-text hover:bg-app-bg transition-colors disabled:opacity-50"
+                  title="Upload Document"
+                >
+                  {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+                </button>
+              </div>
+            )}
             <textarea
               value={input}
               ref={textareaRef}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
               placeholder="Message Nexus AI..."
-              className="w-full bg-transparent text-app-text rounded-2xl pl-4 pr-12 py-4 focus:outline-none resize-none overflow-y-auto min-h-[56px] max-h-[200px]"
+              className={`w-full bg-transparent text-app-text rounded-2xl ${currentChatId ? 'pl-14' : 'pl-4'} pr-12 py-4 focus:outline-none resize-none overflow-y-auto min-h-[56px] max-h-[200px]`}
               rows={1}
               style={{
                 height: 'auto',
@@ -296,8 +423,9 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
             />
             <button
               type="submit"
-              disabled={!input.trim() || isLoading}
+              disabled={!input.trim() || isLoading || isAnyDocumentProcessing}
               className="absolute right-3 bottom-3 p-2 rounded-xl bg-app-btn-primary text-white hover:bg-app-btn-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              title={isAnyDocumentProcessing ? "Waiting for document to finish processing" : "Send message"}
             >
               <Send className="w-4 h-4" />
             </button>

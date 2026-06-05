@@ -77,25 +77,25 @@ class MessageService:
             keyword_search(message)
             or await RouterService.needs_internet(message)
         )
-     if needs_internet:
-         search_result = await SearchService.internet_search(
-             message
-         )
-         formatted_messages.append({
-             "role":"system",
-             "content":f"""
+        if needs_internet:
+            search_result = await SearchService.internet_search(
+                message
+            )
+            formatted_messages.append({
+                "role":"system",
+                "content":f"""
                         use the following internet information.
                         {search_result}
                         Answer using these results.
                         """
-         })
+            })
 
-     stream = (
-        AIService.stream_response(
-        messages=formatted_messages,
-        model=model
+        stream = (
+            AIService.stream_response(
+            messages=formatted_messages,
+            model=model
+            )
         )
-     )
         
      async for chunk in stream:
         full_response += chunk
@@ -212,16 +212,16 @@ class MessageService:
             keyword_search(message) or
         await RouterService.needs_internet(message)
         )
-        print("needs_internet_result from msg_service: ", needs_internet)
-        
-        if needs_internet:
-            search_result = await SearchService.internet_search(
-                 message
-            )
-            print(search_result)
-            formatted_messages.append({
-             "role":"system",
-             "content":f"""
+            print("needs_internet_result from msg_service: ", needs_internet)
+            
+            if needs_internet:
+                search_result = await SearchService.internet_search(
+                     message
+                )
+                print(search_result)
+                formatted_messages.append({
+                 "role":"system",
+                 "content":f"""
                         use the following internet information.
                         {search_result}
                         Answer using these results.
@@ -233,14 +233,14 @@ class MessageService:
                         - If search results disagree, mention uncertainty.
                         - Do not invent facts.
                         """
-            })
+                })
 
-        stream = (
-            AIService.stream_response(
-                messages=formatted_messages,
-                model=model
+            stream = (
+                AIService.stream_response(
+                    messages=formatted_messages,
+                    model=model
+                )
             )
-        )
         
         async for chunk in stream:
             full_response +=chunk

@@ -21,10 +21,10 @@ router = APIRouter(
 @router.post("/chat/{chat_id}")
 async def upload_document(
     chat_id:int,
+    background_task: BackgroundTasks ,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-    background_task: BackgroundTasks = Depends()
 ):
     
     try:
@@ -36,7 +36,7 @@ async def upload_document(
         )
         background_task.add_task(
             generate_embedding_task,
-            document["document_id"]
+            document["id"]
         )
 
         return {
