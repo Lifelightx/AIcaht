@@ -12,6 +12,19 @@ from app.db.models.document_chunk import DocumentChunk
 class DocumentService:
 
     @staticmethod
+    async def has_embedded_documents(
+        chat_id: int,
+        db:AsyncSession
+    ) -> bool:
+        querry = select(Document.id).where(
+            Document.chat_id == chat_id,
+            Document.status == "EMBEDDED"
+        )
+        result = await db.execute(querry)
+
+        return result.first() is not None
+
+    @staticmethod
     async def upload_document(
         chat_id:int,
         file,
@@ -96,4 +109,104 @@ class DocumentService:
             "total_pages": document.total_pages,
             "total_chunks": total_chunks,
             "status": document.status
+        }
+    
+    @staticmethod
+    async def get_chat_document(
+        chat_id: int,
+        user_id: int,
+        db: AsyncSession
+    ):
+        chat_query = (
+            select(Chat).where(
+                Chat.id == chat_id,
+                Chat.user_id == user_id
+            )
+        )
+        result = await db.execute(chat_query)
+        chat = result.scalar_one_or_none()
+
+        if not chat:
+            raise ValueError(
+                "chat not found"
+            )
+        query = (
+            select(Document).where(
+                Document.chat_id == chat_id
+            ).order_by(
+                Document.created_at.desc()
+            )
+        )
+        result = await db.execute(query)
+        documents = result.scalars().all()
+
+        return [
+            {
+                "id": document.id,
+                "filename": document.filename,
+                "status": document.status,
+                "pages": document.total_pages
+            } for document in documents
+        ]
+    
+    @staticmethod
+    async def delete_document(
+        document_id: int,
+        user_id: int,
+        db: AsyncSession
+    ):
+        query = (
+             select(Document)
+             .join(Chat)
+             .where(
+                 Document.id == document_id,
+                 Chat.user_id == user_id
+             )
+            )
+
+        result = await db.execute(query)
+        document = result.scalar_one_or_none()
+
+        if not document:
+            raise ValueError(
+                "document not found"
+            )
+        
+        file_path = Path(
+             document.file_path
+        )
+        if file_path.exists():
+            file_path.unlink()
+        
+        await db.delete(document)
+        await db.commit()
+
+    @staticmethod
+    async def get_document_status(
+    document_id: int,
+    user_id: int,
+    db: AsyncSession
+    ):
+        query = (
+         select(Document)
+         .join(Chat)
+         .where(
+            Document.id == document_id,
+            Chat.user_id == user_id
+            )
+        )
+
+        result = await db.execute(query)
+
+        document = result.scalar_one_or_none()
+
+        if not document:
+            raise ValueError(
+                "document not found"
+            )
+        
+        return {
+         "document_id": document.id,
+         "filename": document.filename,
+         "status": document.status
         }

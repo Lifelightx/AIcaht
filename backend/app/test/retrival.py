@@ -10,7 +10,7 @@ async def retrieval_test():
         results = await (
             RetrievalService.retrieve_chunks(
                 chat_id=36,
-                question="Who is this income certificate issued to?",
+                question="what is the anuual income?",
                 db=db
             )
         )

@@ -6,6 +6,7 @@ class AIService:
     @staticmethod
     async def stream_response(messages:list, model:str):
         model_config = MODEL_REGISTRY.get(model)
+        print("MODEL REQ: ",model,model_config)
         if not model_config:
             raise HTTPException(
                 status_code=404,
@@ -36,7 +37,7 @@ class AIService:
         )
         return await provider.generate(
             messages=messages,
-            model=model
+            model=actual_model_name
         )
 
 

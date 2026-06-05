@@ -15,7 +15,7 @@ class RetrievalService:
         limit: int = 10
     ):
         query_embedding = (
-            EmbeddingService.generate_embedding(
+            EmbeddingService.generate_embeddings(
                 question
             )
         )

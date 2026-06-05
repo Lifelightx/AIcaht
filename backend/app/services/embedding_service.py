@@ -7,7 +7,7 @@ class EmbeddingService:
 
     @staticmethod
     def get_model():
-        if EmbeddingService._model in None:
+        if EmbeddingService._model is None:
             print(
                 "loading embedding model..."
             )

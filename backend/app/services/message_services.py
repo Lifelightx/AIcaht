@@ -12,6 +12,8 @@ import json
 from app.services.ai_services import AIService
 from .router_service import RouterService
 from .search_service import SearchService
+from .document_service import DocumentService
+from .rag_service import RagService
 from app.services.title_service import TitleService
 from app.config.keyword import keyword_search
 class MessageService:
@@ -46,7 +48,32 @@ class MessageService:
             "content": message
         }
      ]
-     needs_internet = (
+     has_documents = await(
+         DocumentService.has_embedded_documents(
+             chat_id=chat.id,
+             db=db
+         )
+     )
+     print("has_documents:", has_documents)
+
+     
+     full_response = ""
+
+     if has_documents:
+         print("Using rag pipline")
+         stream = (
+             RagService.stream_answer(
+                 chat_id=chat.id,
+                 question=message,
+                 db=db,
+                 model=model
+             )
+         )
+     else:
+        print(
+            "Using normal chat"
+        )
+        needs_internet = (
             keyword_search(message)
             or await RouterService.needs_internet(message)
         )
@@ -63,18 +90,23 @@ class MessageService:
                         """
          })
 
-     full_response = ""
-     async for chunk in AIService.stream_response(
+     stream = (
+        AIService.stream_response(
         messages=formatted_messages,
         model=model
-    ):
-         full_response += chunk
-         yield f"data: {json.dumps(chunk)}\n\n"
+        )
+     )
+        
+     async for chunk in stream:
+        full_response += chunk
+        yield f"data: {json.dumps(chunk)}\n\n"
+    
+
      assistant_message = Message(
         chat_id=chat.id,
         role="assistant",
         content=full_response
-     )
+    )
      db.add(assistant_message)
      await db.commit()
 
@@ -147,15 +179,39 @@ class MessageService:
             for msg in history
         ]
         
-        keyword_result = keyword_search(message)
-        router_result = await RouterService.needs_internet(message)
-
-        print(
-         f"keyword_search={keyword_result}, "
-            f"router_service={router_result}"
+       
+        
+        has_documents = await(
+         DocumentService.has_embedded_documents(
+             chat_id=chat_id,
+             db=db
+            )
         )
+        print("has_documents:", has_documents)
 
-        needs_internet = keyword_result or router_result
+        if chat.title == "New chat":
+            generated_title = TitleService.generate_title(message)
+            chat.title = generated_title
+            await db.commit()
+        
+
+        full_response = ""
+        if has_documents:
+            print("Using rag pipline")
+            stream = (
+                RagService.stream_answer(
+                 chat_id=chat.id,
+                 question=message,
+                 db=db,
+                 model=model
+                )
+            )
+        else:
+            print("Using normal pipline")
+            needs_internet = (
+            keyword_search(message) or
+        await RouterService.needs_internet(message)
+        )
         print("needs_internet_result from msg_service: ", needs_internet)
         
         if needs_internet:
@@ -178,17 +234,15 @@ class MessageService:
                         - Do not invent facts.
                         """
             })
-        if chat.title == "New chat":
-            generated_title = TitleService.generate_title(message)
-            chat.title = generated_title
-            await db.commit()
-        
 
-        full_response = ""
-        async for chunk in AIService.stream_response(
-            messages=formatted_messages,
-            model=model
-        ):
+        stream = (
+            AIService.stream_response(
+                messages=formatted_messages,
+                model=model
+            )
+        )
+        
+        async for chunk in stream:
             full_response +=chunk
             yield f"data: {json.dumps(chunk)}\n\n"
         

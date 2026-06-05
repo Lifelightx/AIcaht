@@ -24,7 +24,7 @@ async def upload_document(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
-    background_task: BackgroundTasks = None
+    background_task: BackgroundTasks = Depends()
 ):
     
     try:
@@ -48,3 +48,53 @@ async def upload_document(
             status_code=400,
             detail=str(e)
         )
+
+
+@router.get("/chat/{chat_id}")
+async def get_chat_document(
+    chat_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    documents = await DocumentService.get_chat_document(
+        chat_id=chat_id,
+        user_id= user.id,
+        db=db
+    )
+    return {
+        "data":documents,
+        "message":"all docs are sent"
+    }
+
+@router.delete("/{document_id}")
+async def delete_document(
+    document_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    await DocumentService.delete_document(
+        document_id=document_id,
+        user_id=user.id,
+        db=db
+    )
+
+    return {
+        "message": "document deleted successfully"
+    }
+
+
+@router.get("/{document_id}/status")
+async def get_document_status(
+    document_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    status = await (
+        DocumentService.get_document_status(
+            document_id=document_id,
+            user_id=user.id,
+            db=db
+        )
+    )
+
+    return status
