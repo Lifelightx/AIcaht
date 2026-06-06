@@ -59,12 +59,30 @@ class MessageService:
      
      full_response = ""
 
+     needs_internet = (
+         keyword_search(message)
+         or await RouterService.needs_internet(message)
+     )
+     if needs_internet:
+         search_result = await SearchService.internet_search(
+             message
+         )
+         formatted_messages.append({
+             "role":"system",
+             "content":f"""
+                     use the following internet information.
+                     {search_result}
+                     Answer using these results.
+                     """
+         })
+
      if has_documents:
          print("Using rag pipline")
          stream = (
              RagService.stream_answer(
                  chat_id=chat.id,
                  question=message,
+                 messages=formatted_messages,
                  db=db,
                  model=model
              )
@@ -73,23 +91,6 @@ class MessageService:
         print(
             "Using normal chat"
         )
-        needs_internet = (
-            keyword_search(message)
-            or await RouterService.needs_internet(message)
-        )
-        if needs_internet:
-            search_result = await SearchService.internet_search(
-                message
-            )
-            formatted_messages.append({
-                "role":"system",
-                "content":f"""
-                        use the following internet information.
-                        {search_result}
-                        Answer using these results.
-                        """
-            })
-
         stream = (
             AIService.stream_response(
             messages=formatted_messages,
@@ -196,45 +197,46 @@ class MessageService:
         
 
         full_response = ""
+        needs_internet = (
+            keyword_search(message) or
+            await RouterService.needs_internet(message)
+        )
+        print("needs_internet_result from msg_service: ", needs_internet)
+        
+        if needs_internet:
+            search_result = await SearchService.internet_search(
+                 message
+            )
+            print(search_result)
+            formatted_messages.append({
+             "role":"system",
+             "content":f"""
+                    use the following internet information.
+                    {search_result}
+                    Answer using these results.
+                    Instructions:
+                    - Use only factual information.
+                    - Ignore speculative articles.
+                    - Prefer official sources.
+                    - Prefer Wikipedia and government websites.
+                    - If search results disagree, mention uncertainty.
+                    - Do not invent facts.
+                    """
+            })
+
         if has_documents:
             print("Using rag pipline")
             stream = (
                 RagService.stream_answer(
                  chat_id=chat.id,
                  question=message,
+                 messages=formatted_messages,
                  db=db,
                  model=model
                 )
             )
         else:
             print("Using normal pipline")
-            needs_internet = (
-            keyword_search(message) or
-        await RouterService.needs_internet(message)
-        )
-            print("needs_internet_result from msg_service: ", needs_internet)
-            
-            if needs_internet:
-                search_result = await SearchService.internet_search(
-                     message
-                )
-                print(search_result)
-                formatted_messages.append({
-                 "role":"system",
-                 "content":f"""
-                        use the following internet information.
-                        {search_result}
-                        Answer using these results.
-                        Instructions:
-                        - Use only factual information.
-                        - Ignore speculative articles.
-                        - Prefer official sources.
-                        - Prefer Wikipedia and government websites.
-                        - If search results disagree, mention uncertainty.
-                        - Do not invent facts.
-                        """
-                })
-
             stream = (
                 AIService.stream_response(
                     messages=formatted_messages,
