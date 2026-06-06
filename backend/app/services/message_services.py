@@ -9,10 +9,13 @@ from app.db.models.chat import Chat
 from app.db.models.message import Message
 
 import json
+import asyncio
+import anyio
 from app.services.ai_services import AIService
 from .router_service import RouterService
 from .search_service import SearchService
 from .document_service import DocumentService
+from app.db.session import AsyncSessionLocal
 from .rag_service import RagService
 from app.services.title_service import TitleService
 from app.config.keyword import keyword_search
@@ -98,18 +101,28 @@ class MessageService:
             )
         )
         
-     async for chunk in stream:
-        full_response += chunk
-        yield f"data: {json.dumps(chunk)}\n\n"
-    
-
-     assistant_message = Message(
-        chat_id=chat.id,
-        role="assistant",
-        content=full_response
-    )
-     db.add(assistant_message)
-     await db.commit()
+     try:
+         async for chunk in stream:
+             full_response += chunk
+             yield f"data: {json.dumps(chunk)}\n\n"
+     except asyncio.CancelledError:
+         print("Client disconnected, saving partial response")
+     except Exception as e:
+         print(f"Stream interrupted: {e}")
+     finally:
+         if full_response.strip():
+             try:
+                 with anyio.CancelScope(shield=True):
+                     async with AsyncSessionLocal() as new_db:
+                         assistant_message = Message(
+                             chat_id=chat.id,
+                             role="assistant",
+                             content=full_response
+                         )
+                         new_db.add(assistant_message)
+                         await new_db.commit()
+             except Exception as e:
+                 print(f"Failed to save partial message: {e}")
 
     
     @staticmethod
@@ -244,17 +257,27 @@ class MessageService:
                 )
             )
         
-        async for chunk in stream:
-            full_response +=chunk
-            yield f"data: {json.dumps(chunk)}\n\n"
-        
-        if full_response.strip():
-            assistant_message = Message(
-            chat_id=chat_id,
-            role="assistant",
-            content=full_response
-         )
-        db.add(assistant_message)
-        await db.commit()
+        try:
+            async for chunk in stream:
+                full_response += chunk
+                yield f"data: {json.dumps(chunk)}\n\n"
+        except asyncio.CancelledError:
+            print("Client disconnected, saving partial response")
+        except Exception as e:
+            print(f"Stream interrupted: {e}")
+        finally:
+            if full_response.strip():
+                try:
+                    with anyio.CancelScope(shield=True):
+                        async with AsyncSessionLocal() as new_db:
+                            assistant_message = Message(
+                                chat_id=chat_id,
+                                role="assistant",
+                                content=full_response
+                            )
+                            new_db.add(assistant_message)
+                            await new_db.commit()
+                except Exception as e:
+                    print(f"Failed to save partial message: {e}")
 
         

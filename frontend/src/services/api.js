@@ -15,7 +15,7 @@ const getAuthHeaders = () => {
   return {};
 };
 
-export const fetchChatResponse = async (message, model, onChunk, onChatId = null, chatId = null) => {
+export const fetchChatResponse = async (message, model, onChunk, onChatId = null, chatId = null, signal = null) => {
   const url = chatId ? `${API_BASE_URL}/chats/${chatId}/stream` : `${API_BASE_URL}/chats/stream`;
   
   const response = await fetch(url, {
@@ -25,6 +25,7 @@ export const fetchChatResponse = async (message, model, onChunk, onChatId = null
       ...getAuthHeaders()
     },
     body: JSON.stringify({ message, model }),
+    signal,
   });
 
   if (!response.ok) {

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Terminal, Menu, Copy, Check, Paperclip, FileText, X, Loader2, CheckCircle2 } from 'lucide-react';
+import { Send, Bot, User, Terminal, Menu, Copy, Check, Paperclip, FileText, X, Loader2, CheckCircle2, Square } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
@@ -127,6 +127,15 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
   const scrollContainerRef = useRef(null);
   const shouldAutoScroll = useRef(true);
   const newlyCreatedChatId = useRef(null);
+  const abortControllerRef = useRef(null);
+
+  const handleStopResponse = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (currentChatId) {
@@ -225,6 +234,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
     setMessages(prev => [...prev, { id: botMessageId, role: 'assistant', content: '' }]);
 
     let initialChatId = currentChatId;
+    abortControllerRef.current = new AbortController();
 
     try {
       await fetchChatResponse(
@@ -247,19 +257,40 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
             loadChats();
           }
         },
-        initialChatId
+        initialChatId,
+        abortControllerRef.current.signal
       );
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev =>
-        prev.map(msg =>
-          msg.id === botMessageId
-            ? { ...msg, content: 'Sorry, I encountered an error. Please ensure the backend is running.' }
-            : msg
-        )
-      );
+      if (error.name === 'AbortError') {
+        console.log('Response generation stopped by user');
+        setMessages(prev => {
+          const targetMsg = prev.find(msg => msg.id === botMessageId);
+          if (targetMsg && !targetMsg.content.trim()) {
+            // Remove empty message if stopped instantly
+            return prev.filter(msg => msg.id !== botMessageId);
+          } else if (targetMsg) {
+            // Append an indicator to partial messages
+            return prev.map(msg =>
+              msg.id === botMessageId
+                ? { ...msg, content: msg.content + '\n\n*(Stopped)*' }
+                : msg
+            );
+          }
+          return prev;
+        });
+      } else {
+        console.error('Chat error:', error);
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.id === botMessageId
+              ? { ...msg, content: 'Sorry, I encountered an error. Please ensure the backend is running.' }
+              : msg
+          )
+        );
+      }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -421,14 +452,25 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`;
               }}
             />
-            <button
-              type="submit"
-              disabled={!input.trim() || isLoading || isAnyDocumentProcessing}
-              className="absolute right-3 bottom-3 p-2 rounded-xl bg-app-btn-primary text-white hover:bg-app-btn-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-              title={isAnyDocumentProcessing ? "Waiting for document to finish processing" : "Send message"}
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            {isLoading ? (
+              <button
+                type="button"
+                onClick={handleStopResponse}
+                className="absolute right-3 bottom-3 p-2 rounded-xl bg-app-bg border border-app-border text-app-text hover:text-red-400 hover:border-red-400/30 transition-all shadow-sm"
+                title="Stop generating"
+              >
+                <Square className="w-4 h-4 fill-currentColor" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={!input.trim() || isAnyDocumentProcessing}
+                className="absolute right-3 bottom-3 p-2 rounded-xl bg-app-btn-primary text-white hover:bg-app-btn-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                title={isAnyDocumentProcessing ? "Waiting for document to finish processing" : "Send message"}
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </form>
           <div className="text-center mt-2">
             <p className="text-xs text-app-text-muted">
