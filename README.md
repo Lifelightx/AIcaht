@@ -75,11 +75,12 @@ npm run dev
 
 ## ✨ Current Features
 
+- **Retrieval-Augmented Generation (RAG):** Upload documents (PDF, TXT, CSV, MD) directly into the chat. The system extracts, chunks, and embeds the content in the background with real-time UI status tracking, enabling context-aware AI conversations.
 - **Secure Authentication:** Complete sign-up and login flow with JWT-based route guarding.
-- **Dynamic UI:** Premium GitHub-styled interface with collapsible sidebars and responsive auto-resizing textareas.
-- **Streaming Responses:** Real-time character-by-character message streaming from the AI.
-- **Theme Support:** Fully functional Light and Dark modes.
-- **Markdown Support:** Renders code blocks, tables, and standard markdown in the chat interface.
+- **Dynamic UI:** Premium, responsive interface with a sleek dark mode, custom AI bot logos, collapsible sidebars, and auto-resizing inputs.
+- **Advanced Chat Management:** Dynamically rename or delete chats via intuitive dropdown menus and confirmation modals.
+- **Streaming Responses:** Real-time character-by-character message streaming from the AI for a fluid user experience.
+- **Syntax Highlighting & Markdown:** Renders tables, LaTeX math notation, and code blocks using the VS Code Dark+ theme, complete with 1-click copy functionality.
 
 ---
 
@@ -87,10 +88,10 @@ npm run dev
 
 As the application scales, the following enterprise-grade features are recommended for implementation to elevate the product from a minimum viable product to a market-leading solution:
 
-### 1. Advanced AI Capabilities (RAG & Memory)
-- **Document Chat (RAG):** Integrate `pgvector` into PostgreSQL to allow users to upload PDFs/Docs and chat with their proprietary data.
+### 1. Advanced AI Capabilities
 - **Long-term Conversation Memory:** Implement summarization pipelines that compress older messages to maintain context without exhausting the LLM's context window.
 - **Multi-Modal Support:** Add the ability to paste images for vision-capable models (like LLaVA via Ollama).
+- **Web Browsing Agent:** Give the AI the ability to search the web for up-to-date information.
 
 ### 2. Performance & Scalability Infrastructure
 - **Redis Caching & Queueing:** Introduce Redis for rate limiting, session storage, and semantic caching (caching identical prompt responses).
