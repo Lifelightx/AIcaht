@@ -1,121 +1,82 @@
-# AI Chat Application
+# Nexus AI Chat Platform
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-An enterprise-ready, GitHub-themed AI chat platform designed for performance, scalability, and an exceptional user experience.
+An enterprise-grade, full-stack AI chat application designed for performance, scalability, and an exceptional user experience. Nexus AI provides a secure, locally-hostable environment for interacting with large language models, featuring integrated Document RAG capabilities and real-time streaming.
 
-## 🚀 Overview
+## System Architecture Overview
 
-This repository contains a full-stack AI Chat Application featuring a robust FastAPI backend communicating with an Ollama LLM provider, and a sleek, responsive React frontend powered by Vite and Tailwind CSS. The system is fully containerized using Docker Compose for seamless development and deployment.
+Nexus AI is built on a modern, decoupled architecture:
+- **Backend**: FastAPI (Python) driving high-performance async APIs, WebSockets for streaming, and background task processing for RAG pipelines.
+- **Frontend**: React 18 (Vite) offering a highly responsive, premium dark-mode interface with Tailwind CSS.
+- **Data Persistence**: PostgreSQL 16 utilizing SQLAlchemy as the ORM, designed for robust relational data mapping and vector storage potential.
+- **Infrastructure**: Fully containerized with Docker and Docker Compose, utilizing Nginx as a reverse proxy.
 
-### 🛠 Tech Stack
+## Core Features
 
-**Frontend:**
-- **Framework:** React 18 with Vite
-- **Styling:** Tailwind CSS (GitHub-themed UI, Dark/Light modes)
-- **Routing:** React Router DOM
-- **Features:** Markdown rendering, responsive design, active streaming UI
+- **Retrieval-Augmented Generation (RAG)**: Users can upload documents (PDF, TXT, CSV, MD) into active chats. The backend asynchronously extracts, chunks, and embeds the text, providing the LLM with localized context for intelligent querying.
+- **Real-Time Streaming**: Character-by-character message generation via WebSockets, providing an uninterrupted and fluid user experience.
+- **Robust Authentication**: JWT-based secure authentication flow utilizing bcrypt for password hashing and comprehensive frontend route guarding.
+- **Advanced UI & Code Rendering**: Comprehensive Markdown parsing including LaTeX mathematical notation support and VS Code Dark+ syntax highlighting for code blocks with one-click clipboard functionality.
+- **Dynamic State Management**: Seamless chat creation, renaming, and deletion mechanisms implemented with robust local state handling and backend synchronization.
 
-**Backend:**
-- **Framework:** FastAPI (Python)
-- **Database:** PostgreSQL with SQLAlchemy & asyncpg
-- **Authentication:** JWT, bcrypt (Passlib)
-- **AI Integration:** Ollama (Local/Self-hosted LLMs)
-- **Real-time:** WebSockets for chat streaming
+## Technology Stack
 
-**Infrastructure:**
-- **Containerization:** Docker & Docker Compose
-- **Reverse Proxy:** Nginx
-- **Database:** PostgreSQL 16
+### Backend
+* Framework: FastAPI
+* Database: PostgreSQL (SQLAlchemy, asyncpg)
+* Auth: Passlib, PyJWT
+* AI Integration: Local Ollama LLM provider
 
----
+### Frontend
+* Core: React 18, Vite
+* Styling: Tailwind CSS, lucide-react
+* Markdown & Math: react-markdown, remark-math, rehype-katex, react-syntax-highlighter
 
-## 🏗 Getting Started
+## Installation & Setup
 
 ### Prerequisites
-- Docker and Docker Compose
-- Node.js (for local frontend development)
-- Python 3.10+ (for local backend development)
-- [Ollama](https://ollama.ai/) running locally or accessible via network.
+* Docker & Docker Compose
+* Node.js 18+ (for local frontend execution)
+* Python 3.10+ (for local backend execution)
+* [Ollama](https://ollama.ai/) running locally or accessible via network
 
-### Running with Docker (Recommended)
+### Docker Deployment (Recommended)
 
-1. **Configure Environment:**
-   Ensure your `.env` files are configured appropriately (you may need to create them based on the repository defaults).
-
-2. **Start the Application:**
+1. Clone the repository and navigate to the project root.
+2. Configure environment variables in `.env` files.
+3. Deploy using Docker Compose:
    ```bash
    docker-compose up --build -d
    ```
-
-3. **Access the Application:**
-   - **Frontend UI:** `http://localhost:80` (or `http://localhost:8080`)
-   - **Backend API Docs:** `http://localhost/api/docs`
+4. Access the frontend interface at `http://localhost:80` and API documentation at `http://localhost/api/docs`.
 
 ### Local Development
 
-**Backend:**
+**Backend Setup:**
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-# Set environment variables (DATABASE_URL, etc.)
 uvicorn app.main:app --reload
 ```
 
-**Frontend:**
+**Frontend Setup:**
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
----
+## Strategic Roadmap
 
-## ✨ Current Features
+The application architecture supports future scalability. Proposed enterprise features include:
+1. **Enhanced Memory Management**: Integration of summarization pipelines to manage long-running context windows efficiently.
+2. **Infrastructure Scaling**: Implementation of Redis for semantic caching, rate limiting, and robust session management.
+3. **Enterprise Compliance**: OAuth2 SSO integration (Google, GitHub) and Role-Based Access Control (RBAC).
+4. **Observability**: Integration of OpenTelemetry and Prometheus for comprehensive system and LLM performance tracking.
 
-- **Retrieval-Augmented Generation (RAG):** Upload documents (PDF, TXT, CSV, MD) directly into the chat. The system extracts, chunks, and embeds the content in the background with real-time UI status tracking, enabling context-aware AI conversations.
-- **Secure Authentication:** Complete sign-up and login flow with JWT-based route guarding.
-- **Dynamic UI:** Premium, responsive interface with a sleek dark mode, custom AI bot logos, collapsible sidebars, and auto-resizing inputs.
-- **Advanced Chat Management:** Dynamically rename or delete chats via intuitive dropdown menus and confirmation modals.
-- **Streaming Responses:** Real-time character-by-character message streaming from the AI for a fluid user experience.
-- **Syntax Highlighting & Markdown:** Renders tables, LaTeX math notation, and code blocks using the VS Code Dark+ theme, complete with 1-click copy functionality.
-
----
-
-## 🚀 Roadmap & Advanced Features (Proposed)
-
-As the application scales, the following enterprise-grade features are recommended for implementation to elevate the product from a minimum viable product to a market-leading solution:
-
-### 1. Advanced AI Capabilities
-- **Long-term Conversation Memory:** Implement summarization pipelines that compress older messages to maintain context without exhausting the LLM's context window.
-- **Multi-Modal Support:** Add the ability to paste images for vision-capable models (like LLaVA via Ollama).
-- **Web Browsing Agent:** Give the AI the ability to search the web for up-to-date information.
-
-### 2. Performance & Scalability Infrastructure
-- **Redis Caching & Queueing:** Introduce Redis for rate limiting, session storage, and semantic caching (caching identical prompt responses).
-- **Background Workers:** Use Celery or FastAPI Background Tasks for heavy operations like sending welcome emails or processing uploaded documents.
-- **Streaming Optimizations:** Implement Server-Sent Events (SSE) or optimized WebSockets for more resilient mobile connections.
-
-### 3. Enterprise Security & Compliance
-- **OAuth2 / SSO Integration:** Allow login via GitHub, Google, or Microsoft to reduce friction.
-- **Role-Based Access Control (RBAC):** Differentiate between Free, Pro, and Admin users with corresponding API limit tiers.
-- **Data Privacy & E2E Encryption:** Add options for ephemeral chats (not saved to DB) or encrypted-at-rest chat logs.
-
-### 4. Observability & Analytics
-- **Distributed Tracing & Metrics:** Integrate OpenTelemetry, Prometheus, and Grafana to track LLM latency, token usage, and API performance.
-- **User Analytics:** Implement product analytics (e.g., PostHog) to track feature usage and user retention.
-
-### 5. Collaborative & Productivity Features
-- **Conversation Branching:** Allow users to "branch" a conversation from a specific message, similar to version control for thoughts.
-- **Export Capabilities:** 1-click export of chat threads to Markdown, PDF, or directly to a GitHub Gist.
-- **Prompt Library:** A built-in repository of user-saved or system-provided system prompts.
-
----
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-*Architected and maintained by Jeeban with ❤️.*
