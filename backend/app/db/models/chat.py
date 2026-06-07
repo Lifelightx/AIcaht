@@ -43,3 +43,8 @@ class Chat(Base):
     back_populates="chat",
     cascade="all, delete-orphan"
     )
+    repositories = relationship(
+        "Repository",
+        back_populates="chat",
+        cascade="all, delete-orphan"
+    )

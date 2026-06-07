@@ -13,7 +13,7 @@ class EmbeddingService:
             )
             EmbeddingService._model = (
                 SentenceTransformer(
-                    "all-MiniLM-L6-v2"
+                    "BAAI/bge-base-en-v1.5"
                 )
             )
         return EmbeddingService._model
@@ -29,3 +29,20 @@ class EmbeddingService:
                 normalize_embeddings=True
             ).tolist()
         )
+    
+    @staticmethod
+    def generate_batch_embeddings(
+        texts: list[str]
+    ) -> list[list[float]]:
+
+        model = (
+            EmbeddingService.get_model()
+        )
+
+        embeddings = model.encode(
+            texts,
+            batch_size=64,
+            normalize_embeddings=True
+        )
+
+        return embeddings.tolist()
