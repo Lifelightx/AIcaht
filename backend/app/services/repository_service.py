@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat import Chat
 from app.db.models.repository import Repository
 from app.utils.repository_provider import RepositoryProvider
+from app.db.enums.repo_status import RepositoryStatus
 class RepositoryService:
 
     @staticmethod
@@ -192,8 +193,41 @@ class RepositoryService:
             return False
         return True
 
+    @staticmethod
+    async def has_embedded_repositories(
+        chat_id: int,
+        db: AsyncSession
+    )-> bool:
+        query = select(
+            Repository
+        ).where(
+            Repository.chat_id == chat_id,
+            Repository.status == RepositoryStatus.READY
+        ).limit(1)
 
+        result = await db.execute(query)
+        embedded_repository = result.scalar_one_or_none()
+        if embedded_repository is None:
+            return False
+        
+        return True
 
+    async def get_first_ready_repository(
+            chat_id: int,
+            db: AsyncSession 
+    ):
+        query = (
+        select(Repository)
+        .where(
+            Repository.chat_id == chat_id,
+            Repository.status == RepositoryStatus.READY
+        )
+        .limit(1)
+        )
+
+        result = await db.execute(query)
+
+        return result.scalar_one_or_none()
 
 
 

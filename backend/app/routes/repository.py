@@ -1,14 +1,12 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependency import get_db
 from app.services.repository_service import RepositoryService
-from app.services.repository_clone_service import RepositoryCloneService
-from app.services.repository_chunk import RepositoryChunkService
-from app.services.repository_embedding import RepositoryEmbeddingService
 from app.schema.repository import RepositoryCreate
 from app.db.models.user import User
 from app.utils.dependencies import get_current_user
+from app.utils.background_task import process_repository_task
 router = APIRouter(
     prefix="/api/repositories",
     tags=["repositories"]
@@ -19,6 +17,7 @@ router = APIRouter(
 async def create_repository(
     chat_id: int,
     request: RepositoryCreate,
+    background_task: BackgroundTasks,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
@@ -30,65 +29,57 @@ async def create_repository(
             repository_url=request.repository_url
         )
     )
+    background_task.add_task(
+        process_repository_task,
+        repository.id,
+        request.access_token
+    )
 
     return repository
 
-@router.post("/clone/{repository_id}")
-async def clone_repository(
-    repository_id: int,
-    db: AsyncSession = Depends(get_db)
-):
-    success = (
-        await RepositoryCloneService
-        .clone_repository(
-            repository_id=repository_id,
-            access_token=None,
-            db=db
-        )
-    )
 
+
+@router.get("/chat/{chat_id}")
+async def get_chat_repositories(
+    chat_id: int,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
+):
+    repositories = await RepositoryService.get_chat_repositories(
+        db=db,
+        chat_id=chat_id,
+        user_id=user.id
+    )
     return {
-        "success": success
+        "data": repositories,
+        "message": "all repositories are sent"
     }
 
-
-@router.post(
-    "/{repository_id}/chunk"
-)
-async def chunk_repository(
+@router.delete("/{repository_id}")
+async def delete_repository(
     repository_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    success = await (
-        RepositoryChunkService
-        .process_repository(
-            repository_id,
-            db
-        )
+    await RepositoryService.delete_repository(
+        repository_id=repository_id,
+        user_id=user.id,
+        db=db
     )
-
     return {
-        "success": success
+        "message": "repository deleted successfully"
     }
 
-
-@router.post(
-    "/{repository_id}/embed"
-)
-async def embed_repository(
+@router.get("/{repository_id}/status")
+async def get_repository_status(
     repository_id: int,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    success = (
-        await RepositoryEmbeddingService
-        .generate_embeddings(
-            repository_id,
-            db
-        )
+    repository = await RepositoryService.get_repository(
+        db=db,
+        repository_id=repository_id
     )
-
-    return {
-        "success": success
-    }
-
-@router.get("/{repository_id}/search")
+    if not repository:
+        raise HTTPException(status_code=404, detail="Repository not found")
+    return {"status": repository.status}

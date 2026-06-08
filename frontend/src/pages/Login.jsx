@@ -28,7 +28,7 @@ export default function Login() {
         {/* Logo and Title */}
         <div className="mb-10 flex flex-col items-center">
           <Terminal className="w-12 h-12 text-app-text mb-6" />
-          <h1 className="text-2xl font-light text-app-text tracking-tight">Welcome back to Nexus AI</h1>
+          <h1 className="text-2xl font-light text-app-text tracking-tight">Welcome back to astra ai</h1>
         </div>
 
         {/* Error Message */}

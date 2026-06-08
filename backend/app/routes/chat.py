@@ -31,6 +31,16 @@ async def get_chats(
         user_id=current_user.id
     )
 
+@router.post("", response_model=ChatResponse)
+async def create_empty_chat(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return await ChatService.create_chat(
+        db=db,
+        user_id=current_user.id
+    )
+
 @router.post("/stream")
 async def create_chat_and_stream(
     request: MessageRequest,

@@ -30,7 +30,7 @@ const Sidebar = ({ isDarkMode, toggleDarkMode, selectedModel, setSelectedModel, 
             className="flex items-center gap-2 text-app-text font-semibold hover:opacity-80 transition-opacity focus:outline-none"
           >
             <Terminal className="w-6 h-6 shrink-0 text-app-accent" />
-            <span className="whitespace-nowrap text-lg">Nexus AI</span>
+            <span className="whitespace-nowrap text-lg">astra ai</span>
           </button>
         </div>
 

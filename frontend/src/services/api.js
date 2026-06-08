@@ -245,8 +245,88 @@ export const deleteDocumentApi = async (documentId) => {
   return response.json();
 };
 
+export const createChatApi = async () => {
+  const response = await fetch(`${API_BASE_URL}/chats`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create chat');
+  }
+  return response.json();
+};
+
 export const getDocumentStatusApi = async (documentId) => {
   const response = await fetch(`${API_BASE_URL}/docs/${documentId}/status`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const createRepositoryApi = async (chatId, repositoryUrl, accessToken = null) => {
+  const response = await fetch(`${API_BASE_URL}/repositories/create/${chatId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify({ 
+      repository_url: repositoryUrl,
+      access_token: accessToken || undefined
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to create repository with status ${response.status}`);
+  }
+
+  return response.json();
+};
+
+export const getChatRepositoriesApi = async (chatId) => {
+  const response = await fetch(`${API_BASE_URL}/repositories/chat/${chatId}`, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const deleteRepositoryApi = async (repositoryId) => {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repositoryId}`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error: ${response.status} ${response.statusText}`);
+  }
+
+  return response.json();
+};
+
+export const getRepositoryStatusApi = async (repositoryId) => {
+  const response = await fetch(`${API_BASE_URL}/repositories/${repositoryId}/status`, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

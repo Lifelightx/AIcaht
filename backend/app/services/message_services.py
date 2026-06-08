@@ -17,6 +17,8 @@ from .search_service import SearchService
 from .document_service import DocumentService
 from app.db.session import AsyncSessionLocal
 from .rag_service import RagService
+from .repository_rag import RepositoryRagService
+from .repository_service import RepositoryService
 from app.services.title_service import TitleService
 from app.config.keyword import keyword_search
 class MessageService:
@@ -57,8 +59,14 @@ class MessageService:
              db=db
          )
      )
+     has_repository = await(
+         RepositoryService.has_embedded_repositories(
+             chat_id=chat.id,
+             db=db
+         )
+     )
      print("has_documents:", has_documents)
-
+     print("has repository: ", has_repository)
      
      full_response = ""
 
@@ -88,6 +96,20 @@ class MessageService:
                  messages=formatted_messages,
                  db=db,
                  model=model
+             )
+         )
+     elif has_repository:
+         repository = await RepositoryService.get_first_ready_repository(
+             chat_id = chat.id,
+             db=db
+         )
+         stream = (
+             RepositoryRagService.stream_answer(
+                 repository_id= repository.id,
+                 question= message,
+                 messages=formatted_messages,
+                 model=model,
+                 db=db
              )
          )
      else:
@@ -201,7 +223,14 @@ class MessageService:
              db=db
             )
         )
+        has_repository = await(
+            RepositoryService.has_embedded_repositories(
+                chat_id=chat_id,
+                db=db
+            )
+        )
         print("has_documents:", has_documents)
+        print("has_repository:", has_repository)
 
         if chat.title == "New chat":
             generated_title = TitleService.generate_title(message)
@@ -246,6 +275,21 @@ class MessageService:
                  messages=formatted_messages,
                  db=db,
                  model=model
+                )
+            )
+        elif has_repository:
+            print("Using repository rag pipline")
+            repository = await RepositoryService.get_first_ready_repository(
+                chat_id=chat.id,
+                db=db
+            )
+            stream = (
+                RepositoryRagService.stream_answer(
+                    repository_id=repository.id,
+                    question=message,
+                    messages=formatted_messages,
+                    model=model,
+                    db=db
                 )
             )
         else:

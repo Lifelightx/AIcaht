@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Terminal, Menu, Copy, Check, Paperclip, FileText, X, Loader2, CheckCircle2, Square } from 'lucide-react';
+import { Send, Bot, User, Terminal, Menu, Copy, Check, Paperclip, FileText, X, Loader2, CheckCircle2, Square, GitBranch, FolderGit2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
@@ -7,7 +7,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { fetchChatResponse, fetchChatMessages, uploadDocumentApi, getChatDocumentsApi, deleteDocumentApi, getDocumentStatusApi } from '../services/api';
+import { fetchChatResponse, fetchChatMessages, uploadDocumentApi, getChatDocumentsApi, deleteDocumentApi, getDocumentStatusApi, createRepositoryApi, getChatRepositoriesApi, deleteRepositoryApi, getRepositoryStatusApi, createChatApi } from '../services/api';
 
 const CodeBlock = ({ node, inline, className, children, ...props }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -76,7 +76,7 @@ const MessageItem = React.memo(({ msg, isLoading }) => (
     <div className={`flex flex-col ${msg.role === 'user' ? 'items-end max-w-[85%]' : 'items-start flex-1 max-w-full'} min-w-0`}>
       {msg.role === 'assistant' && (
         <div className="font-semibold text-sm mb-1 text-app-text flex items-center gap-2">
-          Nexus AI
+          astra ai
         </div>
       )}
       <div className={`prose prose-sm dark:prose-invert max-w-none text-app-text prose-pre:p-0 prose-pre:bg-transparent prose-pre:border-none w-full overflow-x-auto ${msg.role === 'user'
@@ -120,7 +120,13 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingMessages, setIsFetchingMessages] = useState(false);
   const [documents, setDocuments] = useState([]);
+  const [repositories, setRepositories] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUploadingRepo, setIsUploadingRepo] = useState(false);
+  const [showRepoModal, setShowRepoModal] = useState(false);
+  const [repoUrlInput, setRepoUrlInput] = useState('');
+  const [repoVisibility, setRepoVisibility] = useState('unknown');
+  const [repoTokenInput, setRepoTokenInput] = useState('');
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -158,6 +164,15 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
             console.error("Failed to fetch documents", e);
           }
 
+          try {
+            const reposRes = await getChatRepositoriesApi(currentChatId);
+            if (reposRes && reposRes.data) {
+              setRepositories(reposRes.data);
+            }
+          } catch (e) {
+            console.error("Failed to fetch repositories", e);
+          }
+
         } catch (error) {
           console.error("Failed to fetch messages:", error);
         } finally {
@@ -168,6 +183,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
     } else {
       setMessages([]);
       setDocuments([]);
+      setRepositories([]);
     }
   }, [currentChatId]);
 
@@ -185,7 +201,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, documents]);
+  }, [messages, documents, repositories]);
 
   // Polling for document status
   useEffect(() => {
@@ -215,7 +231,35 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
     return () => clearInterval(intervalId);
   }, [documents]);
 
-  const isAnyDocumentProcessing = documents.some(d => d.status !== 'EMBEDDED' && d.status !== 'FAILED');
+  // Polling for repository status
+  useEffect(() => {
+    const pendingRepos = repositories.filter(r => r.status !== 'READY' && r.status !== 'FAILED');
+    if (pendingRepos.length === 0) return;
+
+    const intervalId = setInterval(async () => {
+      const updatedRepos = await Promise.all(
+        pendingRepos.map(async (repo) => {
+          try {
+            const statusData = await getRepositoryStatusApi(repo.id);
+            return { ...repo, status: statusData.status };
+          } catch (e) {
+            return repo;
+          }
+        })
+      );
+
+      setRepositories(prevRepos =>
+        prevRepos.map(repo => {
+          const updatedRepo = updatedRepos.find(r => r.id === repo.id);
+          return updatedRepo ? updatedRepo : repo;
+        })
+      );
+    }, 2000); // Poll every 2 seconds
+
+    return () => clearInterval(intervalId);
+  }, [repositories]);
+
+  const isAnyDocumentProcessing = documents.some(d => d.status !== 'EMBEDDED' && d.status !== 'FAILED') || repositories.some(r => r.status !== 'READY' && r.status !== 'FAILED');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -303,11 +347,25 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
-    if (!file || !currentChatId) return;
+    if (!file) return;
+
+    let targetChatId = currentChatId;
+    if (!targetChatId) {
+      try {
+        const newChat = await createChatApi();
+        targetChatId = newChat.id;
+        setCurrentChatId(targetChatId);
+        newlyCreatedChatId.current = targetChatId;
+        loadChats(); // refresh sidebar
+      } catch (err) {
+        console.error("Failed to create chat", err);
+        return;
+      }
+    }
 
     setIsUploading(true);
     try {
-      const res = await uploadDocumentApi(currentChatId, file);
+      const res = await uploadDocumentApi(targetChatId, file);
       if (res && res.data) {
         setDocuments(prev => [...prev, res.data]);
       }
@@ -328,6 +386,83 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
       setDocuments(prev => prev.filter(doc => doc.id !== documentId));
     } catch (error) {
       console.error("Failed to remove document", error);
+    }
+  };
+
+  const handleRepoUpload = async () => {
+    if (!repoUrlInput.trim()) return;
+
+    if (repoVisibility === 'unknown') {
+      setRepoVisibility('checking');
+      try {
+        const urlObj = new URL(repoUrlInput.trim());
+        if (urlObj.hostname === 'github.com') {
+          const parts = urlObj.pathname.split('/').filter(Boolean);
+          if (parts.length >= 2) {
+            const owner = parts[0];
+            const repo = parts[1].replace('.git', '');
+            const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+            if (res.ok) {
+              setRepoVisibility('public');
+            } else {
+              setRepoVisibility('private');
+              return; // Stop and wait for PAT
+            }
+          } else {
+            setRepoVisibility('private');
+            return;
+          }
+        } else {
+          setRepoVisibility('private');
+          return;
+        }
+      } catch {
+        setRepoVisibility('private');
+        return;
+      }
+    }
+
+    if (repoVisibility === 'private' && !repoTokenInput.trim()) return;
+
+    let targetChatId = currentChatId;
+    if (!targetChatId) {
+      try {
+        const newChat = await createChatApi();
+        targetChatId = newChat.id;
+        setCurrentChatId(targetChatId);
+        newlyCreatedChatId.current = targetChatId;
+        loadChats();
+      } catch (err) {
+        console.error("Failed to create chat", err);
+        return;
+      }
+    }
+
+    setIsUploadingRepo(true);
+    try {
+      const token = repoVisibility === 'private' ? repoTokenInput.trim() : null;
+      const repoData = await createRepositoryApi(targetChatId, repoUrlInput.trim(), token);
+      if (repoData) {
+        setRepositories(prev => [...prev, repoData]);
+      }
+      setRepoUrlInput('');
+      setRepoTokenInput('');
+      setRepoVisibility('unknown');
+      setShowRepoModal(false);
+    } catch (error) {
+      console.error("Failed to add repository", error);
+      alert("Failed to add repository. Please try again.");
+    } finally {
+      setIsUploadingRepo(false);
+    }
+  };
+
+  const handleRemoveRepository = async (repositoryId) => {
+    try {
+      await deleteRepositoryApi(repositoryId);
+      setRepositories(prev => prev.filter(repo => repo.id !== repositoryId));
+    } catch (error) {
+      console.error("Failed to remove repository", error);
     }
   };
 
@@ -358,8 +493,47 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
     </div>
   );
 
+  const RepositoryItem = ({ repo }) => (
+    <div className="bg-app-bg-subtle border border-app-border px-3 py-2 rounded-xl shadow-sm flex items-center gap-3 w-fit max-w-[280px]">
+      <div className="p-1.5 bg-app-bg rounded-lg shrink-0 shadow-sm border border-app-border/50">
+        <FolderGit2 className="w-4 h-4 text-app-btn-primary" />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0">
+        <span className="text-sm font-semibold text-app-text truncate leading-tight">{repo.name}</span>
+        <span className="text-[10px] text-app-text-muted mt-0.5 flex items-center gap-1 font-medium">
+          {repo.status === 'READY' ? (
+            <><CheckCircle2 className="w-3 h-3 text-green-500" /> Ready for questions</>
+          ) : repo.status === 'FAILED' ? (
+            <><X className="w-3 h-3 text-red-500" /> Processing failed</>
+          ) : (
+            <><Loader2 className="w-3 h-3 animate-spin text-app-btn-primary" /> Processing...</>
+          )}
+        </span>
+      </div>
+      <button
+        onClick={() => handleRemoveRepository(repo.id)}
+        className="shrink-0 p-1 hover:bg-app-bg rounded-md text-app-text-muted hover:text-red-400 transition-colors border border-transparent hover:border-red-400/20"
+        title="Remove repository"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+
+  const activeDoc = documents.find(d => d.status === 'EMBEDDED');
+  const activeRepo = repositories.find(r => r.status === 'READY');
+
+  let containerStyle = {};
+  if (activeDoc && activeRepo) {
+    containerStyle = { boxShadow: 'inset 0 0 120px rgba(240, 248, 255, 0.1), inset 0 0 120px rgba(144, 238, 144, 0.1)' };
+  } else if (activeDoc) {
+    containerStyle = { boxShadow: 'inset 0 0 120px rgba(240, 248, 255, 0.1)' };
+  } else if (activeRepo) {
+    containerStyle = { boxShadow: 'inset 0 0 120px rgba(144, 238, 144, 0.1)' };
+  }
+
   return (
-    <div className="flex-1 flex flex-col h-full bg-app-bg">
+    <div className="flex-1 flex flex-col h-full bg-app-bg relative transition-shadow duration-700" style={containerStyle}>
       {/* Top Navigation */}
       <div className="h-14 border-b border-app-border flex items-center px-6 shrink-0 bg-app-bg">
         {!isSidebarOpen && (
@@ -408,41 +582,50 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
       {/* Input Area */}
       <div className="p-4 bg-gradient-to-t from-app-bg pt-8">
         <div className="max-w-4xl mx-auto relative group flex flex-col gap-2">
-          {documents.length > 0 && (
+          {(documents.length > 0 || repositories.length > 0) && (
             <div className="flex flex-wrap gap-2 px-2 pb-1">
               {documents.map(doc => (
                 <DocumentItem key={`doc-${doc.id}`} doc={doc} />
               ))}
+              {repositories.map(repo => (
+                <RepositoryItem key={`repo-${repo.id}`} repo={repo} />
+              ))}
             </div>
           )}
           <form onSubmit={handleSubmit} className="relative flex items-end shadow-md rounded-2xl bg-app-bg-subtle border border-app-border">
-            {currentChatId && (
-              <div className="absolute left-3 bottom-3 flex items-center justify-center">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  accept=".txt,.md,.pdf,.csv,.doc,.docx"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading || !currentChatId}
-                  className="p-2 rounded-xl text-app-text-muted hover:text-app-text hover:bg-app-bg transition-colors disabled:opacity-50"
-                  title="Upload Document"
-                >
-                  {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
-                </button>
-              </div>
-            )}
+            <div className="absolute left-3 bottom-3 flex items-center justify-center gap-1 z-10">
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                onChange={handleFileUpload}
+                accept=".txt,.md,.pdf,.csv,.doc,.docx"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                className="p-2 rounded-xl text-app-text-muted hover:text-app-text hover:bg-app-bg transition-colors disabled:opacity-50"
+                title="Upload Document"
+              >
+                {isUploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Paperclip className="w-5 h-5" />}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowRepoModal(true)}
+                className="p-2 rounded-xl text-app-text-muted hover:text-app-text hover:bg-app-bg transition-colors disabled:opacity-50"
+                title="Import Repository"
+              >
+                <GitBranch className="w-5 h-5" />
+              </button>
+            </div>
             <textarea
               value={input}
               ref={textareaRef}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Message Nexus AI..."
-              className={`w-full bg-transparent text-app-text rounded-2xl ${currentChatId ? 'pl-14' : 'pl-4'} pr-12 py-4 focus:outline-none resize-none overflow-y-auto min-h-[56px] max-h-[200px]`}
+              placeholder="Message astra ai..."
+              className="w-full bg-transparent text-app-text rounded-2xl pl-24 pr-12 py-4 focus:outline-none resize-none overflow-y-auto min-h-[56px] max-h-[200px]"
               rows={1}
               style={{
                 height: 'auto',
@@ -466,7 +649,7 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                 type="submit"
                 disabled={!input.trim() || isAnyDocumentProcessing}
                 className="absolute right-3 bottom-3 p-2 rounded-xl bg-app-btn-primary text-white hover:bg-app-btn-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                title={isAnyDocumentProcessing ? "Waiting for document to finish processing" : "Send message"}
+                title={isAnyDocumentProcessing ? "Waiting for document/repo to finish processing" : "Send message"}
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -479,6 +662,86 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
           </div>
         </div>
       </div>
+
+      {/* Repo Modal */}
+      {showRepoModal && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-app-bg border border-app-border rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div className="px-6 py-4 border-b border-app-border flex justify-between items-center bg-app-bg-subtle">
+              <h3 className="font-semibold text-app-text flex items-center gap-2">
+                <GitBranch className="w-5 h-5" /> Import Repository
+              </h3>
+              <button 
+                onClick={() => setShowRepoModal(false)}
+                className="text-app-text-muted hover:text-app-text transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-medium text-app-text-muted mb-2">
+                Repository URL (e.g. https://github.com/user/repo)
+              </label>
+              <input
+                type="text"
+                value={repoUrlInput}
+                onChange={(e) => {
+                  setRepoUrlInput(e.target.value);
+                  setRepoVisibility('unknown');
+                }}
+                placeholder="https://github.com/..."
+                className="w-full bg-app-bg-subtle text-app-text border border-app-border rounded-xl px-4 py-2.5 focus:outline-none focus:border-app-btn-primary transition-colors"
+                autoFocus
+              />
+              
+              {repoVisibility === 'public' && (
+                <div className="mt-3 flex items-center gap-2 text-sm text-green-500 bg-green-500/10 px-3 py-2 rounded-lg border border-green-500/20">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Public repository detected. No token required.
+                </div>
+              )}
+
+              {repoVisibility === 'private' && (
+                <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="block text-sm font-medium text-app-text-muted mb-2">
+                    Personal Access Token (Required for private/unverified repos)
+                  </label>
+                  <input
+                    type="password"
+                    value={repoTokenInput}
+                    onChange={(e) => setRepoTokenInput(e.target.value)}
+                    placeholder="ghp_..."
+                    className="w-full bg-app-bg-subtle text-app-text border border-app-border rounded-xl px-4 py-2.5 focus:outline-none focus:border-app-btn-primary transition-colors"
+                  />
+                  <p className="text-xs text-app-text-muted mt-2">
+                    Your token is securely used only for cloning and is not permanently stored.
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="px-6 py-4 bg-app-bg-subtle border-t border-app-border flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowRepoModal(false);
+                  setRepoVisibility('unknown');
+                  setRepoTokenInput('');
+                }}
+                className="px-4 py-2 rounded-xl text-app-text hover:bg-app-bg transition-colors font-medium text-sm border border-transparent hover:border-app-border"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRepoUpload}
+                disabled={!repoUrlInput.trim() || isUploadingRepo || repoVisibility === 'checking' || (repoVisibility === 'private' && !repoTokenInput.trim())}
+                className="px-4 py-2 rounded-xl bg-app-btn-primary text-white hover:bg-app-btn-primary-hover transition-colors disabled:opacity-50 flex items-center gap-2 font-medium text-sm shadow-sm"
+              >
+                {repoVisibility === 'checking' ? <><Loader2 className="w-4 h-4 animate-spin" /> Checking...</> : 
+                 isUploadingRepo ? <><Loader2 className="w-4 h-4 animate-spin" /> Importing...</> : 'Import'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
