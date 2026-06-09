@@ -9,7 +9,7 @@ from fastapi import (
 
 from app.db.dependency import get_db
 from app.db.models.user import User
-from app.services.document_service import DocumentService
+from app.services.document.document_service import DocumentService
 from app.utils.dependencies import get_current_user
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.utils.background_task import generate_embedding_task

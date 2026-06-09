@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.retrival_service import RetrievalService
-from app.services.ai_services import AIService
+from app.services.rag.retrival_service import RetrievalService
+from app.services.llm.ai_services import AIService
 
 class RagService:
 

@@ -1,8 +1,8 @@
-from app.services.repository_retrieval import (
+from app.services.rag.repository_retrieval import (
     RepositoryRetrievalService
 )
 
-from app.services.ai_services import (
+from app.services.llm.ai_services import (
     AIService
 )
 

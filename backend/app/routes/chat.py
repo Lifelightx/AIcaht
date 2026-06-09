@@ -4,8 +4,8 @@ from app.schema.chat import ChatRequest, RenameRequest
 
 from app.db.dependency import get_db
 from app.schema.chat import ChatResponse
-from app.services.message_services import MessageService
-from app.services.chat_service import ChatService
+from app.services.chat.message_services import MessageService
+from app.services.chat.chat_service import ChatService
 from app.schema.message import(
     MessageRequest,
     MessageResponse

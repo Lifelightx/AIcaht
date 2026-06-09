@@ -4,7 +4,7 @@ from app.db.session import (
     AsyncSessionLocal
 )
 
-from app.services.rag_service import (
+from app.services.rag.rag_service import (
     RagService
 )
 

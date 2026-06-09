@@ -9,7 +9,7 @@ from app.schema.auth import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.dependency import get_db
-from app.services.auth_services import AuthService
+from app.services.auth.auth_services import AuthService
 router = APIRouter(
     prefix="/api/auth"
 )

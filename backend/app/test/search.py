@@ -1,6 +1,6 @@
 import asyncio
-from app.services.search_service import SearchService
-from app.services.chunk_service import ChunkService
+from app.services.llm.search_service import SearchService
+from app.services.llm.chunk_service import ChunkService
 async def main():
     result = await SearchService.internet_search("Who won yesterday IPL match")
     print(result)

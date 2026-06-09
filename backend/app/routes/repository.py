@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.dependency import get_db
-from app.services.repository_service import RepositoryService
+from app.services.repository.repository_service import RepositoryService
 from app.schema.repository import RepositoryCreate
 from app.db.models.user import User
 from app.utils.dependencies import get_current_user

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.document import Document
 from app.db.models.document_chunk import DocumentChunk
 
-from app.services.embedding_service import EmbeddingService
+from app.services.llm.embedding_service import EmbeddingService
 
 class DocumentEmbeddingService:
 

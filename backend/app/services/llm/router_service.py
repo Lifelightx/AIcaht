@@ -1,4 +1,4 @@
-from app.services.ai_services import AIService
+from app.services.llm.ai_services import AIService
 
 
 class RouterService:

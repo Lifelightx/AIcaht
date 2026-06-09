@@ -1,4 +1,4 @@
-from app.services.embedding_service import (
+from app.services.llm.embedding_service import (
     EmbeddingService
 )
 

@@ -5,8 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat import Chat
 from app.db.models.document import Document
-from .pdf_service import PdfService
-from .chunk_service import ChunkService
+from app.services.document.pdf_service import PdfService
+from app.services.llm.chunk_service import ChunkService
 from app.db.models.document_chunk import DocumentChunk
 
 class DocumentService:

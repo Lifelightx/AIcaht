@@ -6,11 +6,11 @@ from app.db.models.repository_chunk import (
     RepositoryChunk
 )
 
-from app.services.chunk_service import (
+from app.services.llm.chunk_service import (
     ChunkService
 )
 
-from app.services.repository_service import (
+from app.services.repository.repository_service import (
     RepositoryService
 )
 

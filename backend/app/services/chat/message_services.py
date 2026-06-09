@@ -11,15 +11,15 @@ from app.db.models.message import Message
 import json
 import asyncio
 import anyio
-from app.services.ai_services import AIService
-from .router_service import RouterService
-from .search_service import SearchService
-from .document_service import DocumentService
+from app.services.llm.ai_services import AIService
+from app.services.llm.router_service import RouterService
+from app.services.llm.search_service import SearchService
+from app.services.document.document_service import DocumentService
 from app.db.session import AsyncSessionLocal
-from .rag_service import RagService
-from .repository_rag import RepositoryRagService
-from .repository_service import RepositoryService
-from app.services.title_service import TitleService
+from app.services.rag.rag_service import RagService
+from app.services.rag.repository_rag import RepositoryRagService
+from app.services.repository.repository_service import RepositoryService
+from app.services.chat.title_service import TitleService
 from app.config.keyword import keyword_search
 class MessageService:
 
@@ -30,7 +30,7 @@ class MessageService:
     message: str,
     model: str
 ):
-     generated_title = TitleService.generate_title(message=message)
+     generated_title = await TitleService.generate_title(message=message)
      chat = Chat(
          title= generated_title,
          user_id= user_id
@@ -233,7 +233,7 @@ class MessageService:
         print("has_repository:", has_repository)
 
         if chat.title == "New chat":
-            generated_title = TitleService.generate_title(message)
+            generated_title = await TitleService.generate_title(message)
             chat.title = generated_title
             await db.commit()
         
@@ -260,6 +260,7 @@ class MessageService:
                     - Use only factual information.
                     - Ignore speculative articles.
                     - Prefer official sources.
+                    - provider the links to user so user can go to link for more details.
                     - Prefer Wikipedia and government websites.
                     - If search results disagree, mention uncertainty.
                     - Do not invent facts.

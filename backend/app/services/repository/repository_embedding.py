@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.repository import Repository
 from app.db.models.repository_chunk import RepositoryChunk
 
-from app.services.embedding_service import EmbeddingService
-from app.services.repository_service import RepositoryService
+from app.services.llm.embedding_service import EmbeddingService
+from app.services.repository.repository_service import RepositoryService
 
 from app.db.enums.repo_status import RepositoryStatus
 

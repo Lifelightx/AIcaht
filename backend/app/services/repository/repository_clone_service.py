@@ -4,7 +4,7 @@ from urllib.parse import urlparse
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.repository_service import RepositoryService
+from app.services.repository.repository_service import RepositoryService
 from app.db.enums.repo_status import RepositoryStatus
 
 class RepositoryCloneService:

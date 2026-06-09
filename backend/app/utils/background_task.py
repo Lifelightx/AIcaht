@@ -2,10 +2,10 @@ from app.db.session import (
     AsyncSessionLocal
 )
 
-from app.services.document_embedding_service import DocumentEmbeddingService
-from app.services.repository_clone_service import RepositoryCloneService
-from app.services.repository_chunk import RepositoryChunkService
-from app.services.repository_embedding import RepositoryEmbeddingService
+from app.services.document.document_embedding_service import DocumentEmbeddingService
+from app.services.repository.repository_clone_service import RepositoryCloneService
+from app.services.repository.repository_chunk import RepositoryChunkService
+from app.services.repository.repository_embedding import RepositoryEmbeddingService
 
 async def generate_embedding_task(
         document_id: int

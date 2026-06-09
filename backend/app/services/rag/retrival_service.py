@@ -1,25 +1,19 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.repository_chunk import (
-    RepositoryChunk
-)
+from app.db.models.document_chunk import DocumentChunk
+from app.db.models.document import Document
+from app.services.llm.embedding_service import EmbeddingService
 
-from app.services.embedding_service import (
-    EmbeddingService
-)
-
-
-class RepositoryRetrievalService:
+class RetrievalService:
 
     @staticmethod
     async def retrieve_chunks(
-        repository_id: int,
+        chat_id: int,
         question: str,
         db: AsyncSession,
         limit: int = 10
     ):
-
         query_embedding = (
             EmbeddingService.generate_embeddings(
                 question
@@ -28,17 +22,20 @@ class RepositoryRetrievalService:
 
         query = (
             select(
-                RepositoryChunk
+                DocumentChunk,
+                Document
+            )
+            .join(
+                Document,
+                DocumentChunk.document_id == Document.id
             )
             .where(
-                RepositoryChunk.repository_id
-                == repository_id,
-                RepositoryChunk.embedding.is_not(
-                    None
-                )
+                Document.chat_id == chat_id,
+                Document.status == "EMBEDDED",
+                DocumentChunk.embedding.is_not(None)
             )
             .order_by(
-                RepositoryChunk.embedding.cosine_distance(
+                DocumentChunk.embedding.cosine_distance(
                     query_embedding
                 )
             )
@@ -49,4 +46,4 @@ class RepositoryRetrievalService:
             query
         )
 
-        return result.scalars().all()
+        return result.all()
