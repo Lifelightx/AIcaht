@@ -20,7 +20,7 @@ ENV TRANSFORMERS_CACHE=/app/models
 # Pre-download model during build
 RUN python -c "\
 from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('BAAI/bge-base-en-v1.5').save('/app/models/bge-base-en-v1.5')"
+SentenceTransformer('BAAI/bge-base0-en-v1.5').save('/app/models/bge-base-en-v1.5')"
 
 COPY ./app ./app
 

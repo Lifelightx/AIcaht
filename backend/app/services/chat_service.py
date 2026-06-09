@@ -1,6 +1,10 @@
+import os
+import shutil
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.models.chat import Chat
+from app.db.models.repository import Repository
+from app.db.models.document import Document
 
 class ChatService:
 
@@ -40,6 +44,28 @@ class ChatService:
         if chat == None:
             return False
         if chat:
+            # Clean up document files
+            doc_query = select(Document).where(Document.chat_id == chat_id)
+            doc_result = await db.execute(doc_query)
+            docs = doc_result.scalars().all()
+            for doc in docs:
+                if doc.file_path and os.path.exists(doc.file_path):
+                    try:
+                        os.unlink(doc.file_path)
+                    except Exception as e:
+                        print(f"Error deleting document file {doc.file_path}: {e}")
+            
+            # Clean up repository folders
+            repo_query = select(Repository).where(Repository.chat_id == chat_id)
+            repo_result = await db.execute(repo_query)
+            repos = repo_result.scalars().all()
+            for repo in repos:
+                if repo.local_path and os.path.exists(repo.local_path) and os.path.isdir(repo.local_path):
+                    try:
+                        shutil.rmtree(repo.local_path)
+                    except Exception as e:
+                        print(f"Error deleting repository folder {repo.local_path}: {e}")
+
             await db.delete(chat)
             await db.commit()
             return True

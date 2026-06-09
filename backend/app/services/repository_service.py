@@ -1,3 +1,5 @@
+import os
+import shutil
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -127,8 +129,16 @@ class RepositoryService:
         if repository is None:
             return False
         
+        local_path = repository.local_path
+        
         await db.delete(repository)
         await db.commit()
+        
+        if local_path and os.path.exists(local_path) and os.path.isdir(local_path):
+            try:
+                shutil.rmtree(local_path)
+            except Exception as e:
+                print(f"Error deleting repository folder {local_path}: {e}")
         
         return True
     @staticmethod
