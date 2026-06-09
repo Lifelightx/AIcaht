@@ -1,12 +1,12 @@
-# jhatuGPT Chat Platform
+# astra ai Chat Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-An enterprise-grade, full-stack AI chat application designed for performance, scalability, and an exceptional user experience. jhatuGPT provides a secure, locally-hostable environment for interacting with large language models, featuring integrated Document RAG capabilities and real-time streaming.
+An enterprise-grade, full-stack AI chat application designed for performance, scalability, and an exceptional user experience. astra ai provides a secure, locally-hostable environment for interacting with large language models, featuring integrated Document RAG capabilities and real-time streaming.
 
 ## System Architecture Overview
 
-jhatuGPT is built on a modern, decoupled architecture:
+astra ai is built on a modern, decoupled architecture:
 - **Backend**: FastAPI (Python) driving high-performance async APIs, WebSockets for streaming, and background task processing for RAG pipelines.
 - **Frontend**: React 18 (Vite) offering a highly responsive, premium dark-mode interface with Tailwind CSS.
 - **Data Persistence**: PostgreSQL 16 utilizing SQLAlchemy as the ORM, designed for robust relational data mapping and vector storage potential.
