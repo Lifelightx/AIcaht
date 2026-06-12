@@ -11,14 +11,17 @@ RUN apt-get update && apt-get install -y \
 
 COPY requirements.txt .
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Cache pip downloads to speed up dependency installation
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install --no-cache-dir -r requirements.txt
 
 # HuggingFace cache location
 ENV HF_HOME=/app/models
 ENV TRANSFORMERS_CACHE=/app/models
 
-# Pre-download model during build
-RUN python -c "\
+# Pre-download model during build using BuildKit cache mount
+RUN --mount=type=cache,target=/app/models \
+    python -c "\
 from sentence_transformers import SentenceTransformer; \
 SentenceTransformer('BAAI/bge-base-en-v1.5').save('/app/models/bge-base-en-v1.5')"
 

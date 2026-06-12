@@ -703,9 +703,19 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
 
               {repoVisibility === 'private' && (
                 <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-sm font-medium text-app-text-muted mb-2">
-                    Personal Access Token (Required for private/unverified repos)
-                  </label>
+                  <div className="flex justify-between items-end mb-2">
+                    <label className="block text-sm font-medium text-app-text-muted">
+                      Personal Access Token
+                    </label>
+                    <a 
+                      href="https://github.com/settings/tokens/new?description=Astra+AI+Repo+Import&scopes=repo" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-app-btn-primary hover:text-app-btn-primary-hover transition-colors flex items-center gap-1 font-medium hover:underline"
+                    >
+                      How to generate?
+                    </a>
+                  </div>
                   <input
                     type="password"
                     value={repoTokenInput}
@@ -713,8 +723,8 @@ const ChatArea = ({ selectedModel, isSidebarOpen, toggleSidebar, currentChatId, 
                     placeholder="ghp_..."
                     className="w-full bg-app-bg-subtle text-app-text border border-app-border rounded-xl px-4 py-2.5 focus:outline-none focus:border-app-btn-primary transition-colors"
                   />
-                  <p className="text-xs text-app-text-muted mt-2">
-                    Your token is securely used only for cloning and is not permanently stored.
+                  <p className="text-[11px] text-app-text-muted mt-2 leading-relaxed">
+                    Required for private or unverified repos. Your token is securely used only for cloning and is not permanently stored.
                   </p>
                 </div>
               )}

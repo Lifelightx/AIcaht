@@ -190,7 +190,8 @@ class RepositoryChunkService:
 
         chunks = (
             ChunkService.chunk_code(
-                content
+                text=content,
+                extension=os.path.splitext(absolute_path)[1].lower()
             )
         )
 
