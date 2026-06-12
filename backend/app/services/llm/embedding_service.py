@@ -5,7 +5,7 @@ from sentence_transformers import SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
-MODEL_NAME = "BAAI/bge-base-en-v1.5"
+MODEL_NAME = "/app/models/bge-base-en-v1.5"
 LOCAL_MODEL_PATH = "/app/models/bge-base-en-v1.5"
 
 

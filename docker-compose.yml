@@ -34,6 +34,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: chatapp_backend
+    image: chat-app-backend
+    env_file:
+      - ./backend/.env
     environment:
       - OLLAMA_HOST=http://host.docker.internal:11434
       # 🌟 FIX 2: Ensure your backend knows to talk to the 'postgres' service container name, not 'localhost'
@@ -50,6 +53,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    image: chat-app-frontend
     container_name: chatapp_frontend
     environment:
       - VITE_API_URL=/api    

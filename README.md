@@ -40,11 +40,34 @@ astra ai is built on a modern, decoupled architecture:
 * Node.js 18+ (for local frontend execution)
 * Python 3.10+ (for local backend execution)
 * [Ollama](https://ollama.ai/) running locally or accessible via network
+* Git Large File Storage (LFS) or Hugging Face CLI (for downloading the embedding model)
+
+### Preparing the Embedding Model & Environment
+
+Before running the application via Docker or locally, you must download the `bge-base-en-v1.5` embedding model. The backend expects this model to be present in the `backend/models` directory.
+
+```bash
+# Install Hugging Face CLI if you haven't already
+pip install -U "huggingface_hub[cli]"
+
+# Download the model to the backend/models directory
+huggingface-cli download BAAI/bge-base-en-v1.5 --local-dir backend/models/bge-base-en-v1.5
+```
+
+Alternatively, using Git LFS:
+```bash
+git lfs install
+git clone https://huggingface.co/BAAI/bge-base-en-v1.5 backend/models/bge-base-en-v1.5
+```
 
 ### Docker Deployment (Recommended)
 
 1. Clone the repository and navigate to the project root.
-2. Configure environment variables in `.env` files.
+2. Configure environment variables. Create a `backend/.env` file and set the necessary API keys, including the Tavily API key used for web search functionalities:
+   ```env
+   OLLAMA_HOST=http://host.docker.internal:11434  # Example for Docker accessing local Ollama
+   TAVILY_API_KEY=your_tavily_api_key_here
+   ```
 3. Deploy using Docker Compose:
    ```bash
    docker-compose up --build -d

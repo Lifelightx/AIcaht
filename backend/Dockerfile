@@ -2,29 +2,25 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
+# Install standard Linux utilities
 RUN apt-get update && apt-get install -y \
+    git \
     ca-certificates \
     curl \
-    git \
-    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
+# Install python dependencies
 COPY requirements.txt .
 
-# Cache pip downloads to speed up dependency installation
+# ✅ FIXED: Corrected index URL to the official PyTorch CPU wheel repo
 RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu -r requirements.txt
 
-# HuggingFace cache location
-ENV HF_HOME=/app/models
-ENV TRANSFORMERS_CACHE=/app/models
+# 1. COPY THE LOCAL MODEL INTO THE IMAGE
+# This bakes the downloaded model straight into your Docker image layer
+COPY ./models/bge-base-en-v1.5 /app/models/bge-base-en-v1.5
 
-# Pre-download model during build using BuildKit cache mount
-RUN --mount=type=cache,target=/app/models \
-    python -c "\
-from sentence_transformers import SentenceTransformer; \
-SentenceTransformer('BAAI/bge-base-en-v1.5').save('/app/models/bge-base-en-v1.5')"
-
+# 2. Copy application code
 COPY ./app ./app
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=20s \
